@@ -14,7 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      plant_events: {
+        Row: {
+          created_at: string
+          event_at: string
+          id: string
+          image_url: string | null
+          label: string
+          note: string | null
+          plant_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_at?: string
+          id?: string
+          image_url?: string | null
+          label: string
+          note?: string | null
+          plant_id: string
+        }
+        Update: {
+          created_at?: string
+          event_at?: string
+          id?: string
+          image_url?: string | null
+          label?: string
+          note?: string | null
+          plant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plant_events_plant_id_fkey"
+            columns: ["plant_id"]
+            isOneToOne: false
+            referencedRelation: "plants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plants: {
+        Row: {
+          acquired_at: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          light_needs: string | null
+          name: string
+          notes: string | null
+          room: string | null
+          species: string | null
+          updated_at: string
+          watering_interval_days: number | null
+        }
+        Insert: {
+          acquired_at?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          light_needs?: string | null
+          name: string
+          notes?: string | null
+          room?: string | null
+          species?: string | null
+          updated_at?: string
+          watering_interval_days?: number | null
+        }
+        Update: {
+          acquired_at?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          light_needs?: string | null
+          name?: string
+          notes?: string | null
+          room?: string | null
+          species?: string | null
+          updated_at?: string
+          watering_interval_days?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
