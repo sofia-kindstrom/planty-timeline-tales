@@ -25,8 +25,10 @@ export type PlantEvent = {
 };
 
 export async function uploadPlantImage(file: File): Promise<string> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Du måste vara inloggad för att ladda upp bilder.");
   const ext = file.name.split(".").pop() ?? "jpg";
-  const path = `${crypto.randomUUID()}.${ext}`;
+  const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage
     .from("plant-images")
     .upload(path, file, { cacheControl: "3600", upsert: false });

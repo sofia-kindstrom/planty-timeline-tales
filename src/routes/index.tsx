@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Plus, Leaf } from "lucide-react";
+import { Plus, Leaf, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddPlantDialog } from "@/components/AddPlantDialog";
 import { listPlants, Plant } from "@/lib/plants";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -31,6 +32,13 @@ function Gallery() {
         <div className="mx-auto flex max-w-3xl items-center gap-2 px-4 py-4">
           <Leaf className="h-6 w-6 text-primary" />
           <h1 className="text-xl font-semibold tracking-tight">Min Växtdagbok</h1>
+          <button
+            onClick={() => supabase.auth.signOut()}
+            aria-label="Logga ut"
+            className="ml-auto flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
       </header>
 
