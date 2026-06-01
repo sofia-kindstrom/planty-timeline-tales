@@ -42,7 +42,10 @@ export function AddPlantDialog({ open, onOpenChange, onSaved }: Props) {
       return;
     }
     setSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setSaving(false); toast.error("Du måste vara inloggad."); return; }
     const { error } = await supabase.from("plants").insert({
+      user_id: user.id,
       name: name.trim(),
       species: species.trim() || null,
       room: room.trim() || null,
