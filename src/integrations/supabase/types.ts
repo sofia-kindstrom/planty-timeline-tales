@@ -64,6 +64,7 @@ export type Database = {
           room: string | null
           species: string | null
           updated_at: string
+          user_id: string | null
           watering_interval_days: number | null
         }
         Insert: {
@@ -77,6 +78,7 @@ export type Database = {
           room?: string | null
           species?: string | null
           updated_at?: string
+          user_id?: string | null
           watering_interval_days?: number | null
         }
         Update: {
@@ -90,6 +92,7 @@ export type Database = {
           room?: string | null
           species?: string | null
           updated_at?: string
+          user_id?: string | null
           watering_interval_days?: number | null
         }
         Relationships: []
