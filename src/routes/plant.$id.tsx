@@ -21,16 +21,18 @@ function PlantPage() {
   const navigate = useNavigate();
   const [plant, setPlant] = useState<Plant | null>(null);
   const [events, setEvents] = useState<PlantEvent[]>([]);
+  const [allPlants, setAllPlants] = useState<Plant[]>([]);
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
+  const [addCuttingOpen, setAddCuttingOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<PlantEvent | null>(null);
 
   const load = async () => {
     setLoading(true);
     try {
-      const [p, e] = await Promise.all([getPlant(id), listEvents(id)]);
-      setPlant(p); setEvents(e);
+      const [p, e, all] = await Promise.all([getPlant(id), listEvents(id), listPlants()]);
+      setPlant(p); setEvents(e); setAllPlants(all);
     } catch {
       setPlant(null);
     }
