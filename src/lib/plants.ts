@@ -10,7 +10,7 @@ export type Plant = {
   acquired_at: string | null;
   notes: string | null;
   image_url: string | null;
-  created_at: string;
+  parent_id: string | null;
   updated_at: string;
 };
 
