@@ -126,6 +126,20 @@ export function EditPlantDialog({ open, onOpenChange, plant, onSaved, onDeleted 
             <Input id="acq" type="date" value={acquiredAt} onChange={(e) => setAcquiredAt(e.target.value)} />
           </div>
           <div className="space-y-2">
+            <Label htmlFor="parent">Mor-växt</Label>
+            <select
+              id="parent"
+              value={parentId ?? ""}
+              onChange={(e) => setParentId(e.target.value || null)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="">— Ingen —</option>
+              {parentOptions.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="notes">Anteckningar</Label>
             <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
           </div>
