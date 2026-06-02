@@ -33,7 +33,33 @@ export function EditPlantDialog({ open, onOpenChange, plant, onSaved, onDeleted 
   const [acquiredAt, setAcquiredAt] = useState(plant.acquired_at ?? "");
   const [notes, setNotes] = useState(plant.notes ?? "");
   const [imageUrl, setImageUrl] = useState<string | null>(plant.image_url);
+  const [parentId, setParentId] = useState<string | null>(plant.parent_id);
+  const [plants, setPlants] = useState<Plant[]>([]);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) listPlants().then(setPlants).catch(() => {});
+  }, [open]);
+
+  // Exclude self and descendants to avoid cycles
+  const parentOptions = useMemo(() => {
+    const childrenOf = new Map<string, string[]>();
+    for (const p of plants) {
+      if (!p.parent_id) continue;
+      const arr = childrenOf.get(p.parent_id) ?? [];
+      arr.push(p.id);
+      childrenOf.set(p.parent_id, arr);
+    }
+    const forbidden = new Set<string>([plant.id]);
+    const stack = [plant.id];
+    while (stack.length) {
+      const id = stack.pop()!;
+      for (const c of childrenOf.get(id) ?? []) {
+        if (!forbidden.has(c)) { forbidden.add(c); stack.push(c); }
+      }
+    }
+    return plants.filter((p) => !forbidden.has(p.id));
+  }, [plants, plant.id]);
 
   const save = async () => {
     if (!name.trim()) { toast.error("Växten behöver ett namn"); return; }
