@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ImagePicker } from "./ImagePicker";
 import { supabase } from "@/integrations/supabase/client";
-import { Plant } from "@/lib/plants";
+import { listPlants, Plant } from "@/lib/plants";
 import { toast } from "sonner";
 
 type Props = {
@@ -33,7 +33,33 @@ export function EditPlantDialog({ open, onOpenChange, plant, onSaved, onDeleted 
   const [acquiredAt, setAcquiredAt] = useState(plant.acquired_at ?? "");
   const [notes, setNotes] = useState(plant.notes ?? "");
   const [imageUrl, setImageUrl] = useState<string | null>(plant.image_url);
+  const [parentId, setParentId] = useState<string | null>(plant.parent_id);
+  const [plants, setPlants] = useState<Plant[]>([]);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) listPlants().then(setPlants).catch(() => {});
+  }, [open]);
+
+  // Exclude self and descendants to avoid cycles
+  const parentOptions = useMemo(() => {
+    const childrenOf = new Map<string, string[]>();
+    for (const p of plants) {
+      if (!p.parent_id) continue;
+      const arr = childrenOf.get(p.parent_id) ?? [];
+      arr.push(p.id);
+      childrenOf.set(p.parent_id, arr);
+    }
+    const forbidden = new Set<string>([plant.id]);
+    const stack = [plant.id];
+    while (stack.length) {
+      const id = stack.pop()!;
+      for (const c of childrenOf.get(id) ?? []) {
+        if (!forbidden.has(c)) { forbidden.add(c); stack.push(c); }
+      }
+    }
+    return plants.filter((p) => !forbidden.has(p.id));
+  }, [plants, plant.id]);
 
   const save = async () => {
     if (!name.trim()) { toast.error("Växten behöver ett namn"); return; }
@@ -47,6 +73,7 @@ export function EditPlantDialog({ open, onOpenChange, plant, onSaved, onDeleted 
       acquired_at: acquiredAt || null,
       notes: notes.trim() || null,
       image_url: imageUrl,
+      parent_id: parentId,
     }).eq("id", plant.id);
     setSaving(false);
     if (error) { toast.error(error.message); return; }
@@ -97,6 +124,20 @@ export function EditPlantDialog({ open, onOpenChange, plant, onSaved, onDeleted 
           <div className="space-y-2">
             <Label htmlFor="acq">Anskaffad</Label>
             <Input id="acq" type="date" value={acquiredAt} onChange={(e) => setAcquiredAt(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="parent">Mor-växt</Label>
+            <select
+              id="parent"
+              value={parentId ?? ""}
+              onChange={(e) => setParentId(e.target.value || null)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="">— Ingen —</option>
+              {parentOptions.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="notes">Anteckningar</Label>

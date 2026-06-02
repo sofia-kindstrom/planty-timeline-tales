@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,15 +12,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ImagePicker } from "./ImagePicker";
 import { supabase } from "@/integrations/supabase/client";
+import { listPlants, Plant } from "@/lib/plants";
 import { toast } from "sonner";
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSaved: () => void;
+  defaultParentId?: string | null;
 };
 
-export function AddPlantDialog({ open, onOpenChange, onSaved }: Props) {
+export function AddPlantDialog({ open, onOpenChange, onSaved, defaultParentId = null }: Props) {
   const [name, setName] = useState("");
   const [species, setSpecies] = useState("");
   const [room, setRoom] = useState("");
@@ -29,11 +31,21 @@ export function AddPlantDialog({ open, onOpenChange, onSaved }: Props) {
   const [acquiredAt, setAcquiredAt] = useState("");
   const [notes, setNotes] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [parentId, setParentId] = useState<string | null>(defaultParentId);
+  const [plants, setPlants] = useState<Plant[]>([]);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setParentId(defaultParentId);
+      listPlants().then(setPlants).catch(() => {});
+    }
+  }, [open, defaultParentId]);
 
   const reset = () => {
     setName(""); setSpecies(""); setRoom(""); setWateringDays("");
     setLightNeeds(""); setAcquiredAt(""); setNotes(""); setImageUrl(null);
+    setParentId(defaultParentId);
   };
 
   const save = async () => {
@@ -54,6 +66,7 @@ export function AddPlantDialog({ open, onOpenChange, onSaved }: Props) {
       acquired_at: acquiredAt || null,
       notes: notes.trim() || null,
       image_url: imageUrl,
+      parent_id: parentId,
     });
     setSaving(false);
     if (error) { toast.error(error.message); return; }
@@ -97,6 +110,20 @@ export function AddPlantDialog({ open, onOpenChange, onSaved }: Props) {
           <div className="space-y-2">
             <Label htmlFor="acq">Anskaffad</Label>
             <Input id="acq" type="date" value={acquiredAt} onChange={(e) => setAcquiredAt(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="parent">Mor-växt (om sticklingen kommer från en annan växt)</Label>
+            <select
+              id="parent"
+              value={parentId ?? ""}
+              onChange={(e) => setParentId(e.target.value || null)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="">— Ingen —</option>
+              {plants.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="notes">Anteckningar</Label>
