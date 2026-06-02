@@ -61,6 +61,7 @@ export type Database = {
           light_needs: string | null
           name: string
           notes: string | null
+          parent_id: string | null
           room: string | null
           species: string | null
           updated_at: string
@@ -75,6 +76,7 @@ export type Database = {
           light_needs?: string | null
           name: string
           notes?: string | null
+          parent_id?: string | null
           room?: string | null
           species?: string | null
           updated_at?: string
@@ -89,13 +91,22 @@ export type Database = {
           light_needs?: string | null
           name?: string
           notes?: string | null
+          parent_id?: string | null
           room?: string | null
           species?: string | null
           updated_at?: string
           user_id?: string | null
           watering_interval_days?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "plants_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "plants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
