@@ -1,9 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ArrowLeft, Plus, Pencil, Droplets, Sun, Calendar, Home, Leaf } from "lucide-react";
-import { getPlant, listEvents, Plant, PlantEvent } from "@/lib/plants";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, Plus, Pencil, Droplets, Sun, Calendar, Home, Leaf, GitBranch } from "lucide-react";
+import { getPlant, listEvents, listPlants, Plant, PlantEvent } from "@/lib/plants";
 import { EventDialog } from "@/components/EventDialog";
 import { EditPlantDialog } from "@/components/EditPlantDialog";
+import { AddPlantDialog } from "@/components/AddPlantDialog";
 
 export const Route = createFileRoute("/plant/$id")({
   component: PlantPage,
