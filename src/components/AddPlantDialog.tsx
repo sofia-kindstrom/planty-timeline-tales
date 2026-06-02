@@ -22,7 +22,7 @@ type Props = {
   defaultParentId?: string | null;
 };
 
-export function AddPlantDialog({ open, onOpenChange, onSaved }: Props) {
+export function AddPlantDialog({ open, onOpenChange, onSaved, defaultParentId = null }: Props) {
   const [name, setName] = useState("");
   const [species, setSpecies] = useState("");
   const [room, setRoom] = useState("");
@@ -31,11 +31,21 @@ export function AddPlantDialog({ open, onOpenChange, onSaved }: Props) {
   const [acquiredAt, setAcquiredAt] = useState("");
   const [notes, setNotes] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [parentId, setParentId] = useState<string | null>(defaultParentId);
+  const [plants, setPlants] = useState<Plant[]>([]);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setParentId(defaultParentId);
+      listPlants().then(setPlants).catch(() => {});
+    }
+  }, [open, defaultParentId]);
 
   const reset = () => {
     setName(""); setSpecies(""); setRoom(""); setWateringDays("");
     setLightNeeds(""); setAcquiredAt(""); setNotes(""); setImageUrl(null);
+    setParentId(defaultParentId);
   };
 
   const save = async () => {
