@@ -184,6 +184,118 @@ function PlantPage() {
         onSaved={load}
         onDeleted={() => navigate({ to: "/" })}
       />
+      <AddPlantDialog
+        open={addCuttingOpen}
+        onOpenChange={setAddCuttingOpen}
+        onSaved={load}
+        defaultParentId={plant.id}
+      />
+    </div>
+  );
+}
+
+function FamilyTree({
+  current,
+  all,
+  onAddCutting,
+}: {
+  current: Plant;
+  all: Plant[];
+  onAddCutting: () => void;
+}) {
+  const { root, byParent } = useMemo(() => {
+    const byId = new Map(all.map((p) => [p.id, p]));
+    const byParent = new Map<string | null, Plant[]>();
+    for (const p of all) {
+      const key = p.parent_id ?? null;
+      const arr = byParent.get(key) ?? [];
+      arr.push(p);
+      byParent.set(key, arr);
+    }
+    let root: Plant = current;
+    const seen = new Set<string>([current.id]);
+    while (root.parent_id) {
+      const next = byId.get(root.parent_id);
+      if (!next || seen.has(next.id)) break;
+      seen.add(next.id);
+      root = next;
+    }
+    return { root, byParent };
+  }, [all, current]);
+
+  const hasFamily = root.id !== current.id || (byParent.get(current.id)?.length ?? 0) > 0;
+
+  return (
+    <section className="mt-8">
+      <div className="flex items-center justify-between px-1">
+        <h2 className="flex items-center gap-2 text-lg font-semibold">
+          <GitBranch className="h-4 w-4 text-primary" /> Släktträd
+        </h2>
+        <button
+          onClick={onAddCutting}
+          className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground transition active:scale-95"
+        >
+          + Stickling
+        </button>
+      </div>
+
+      {!hasFamily ? (
+        <div className="mt-4 rounded-2xl border border-dashed border-border bg-secondary/30 p-6 text-center text-sm text-muted-foreground">
+          Ingen släkt än. Lägg till en stickling så börjar trädet växa 🌿
+        </div>
+      ) : (
+        <div className="no-scrollbar mt-4 -mx-4 overflow-x-auto px-4 pb-2">
+          <div className="inline-block min-w-full">
+            <TreeNode node={root} byParent={byParent} currentId={current.id} />
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function TreeNode({
+  node,
+  byParent,
+  currentId,
+}: {
+  node: Plant;
+  byParent: Map<string | null, Plant[]>;
+  currentId: string;
+}) {
+  const children = byParent.get(node.id) ?? [];
+  const isCurrent = node.id === currentId;
+  return (
+    <div className="flex flex-col items-start">
+      <Link
+        to="/plant/$id"
+        params={{ id: node.id }}
+        className={`flex items-center gap-2 rounded-full py-1 pl-1 pr-3 ring-1 transition active:scale-95 ${
+          isCurrent
+            ? "bg-primary/15 ring-primary"
+            : "bg-card ring-border hover:bg-secondary"
+        }`}
+      >
+        <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-secondary">
+          {node.image_url ? (
+            <img src={node.image_url} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <Leaf className="h-4 w-4 text-accent" />
+            </div>
+          )}
+        </div>
+        <span className={`text-sm ${isCurrent ? "font-semibold" : ""}`}>{node.name}</span>
+      </Link>
+      {children.length > 0 && (
+        <div className="ml-4 mt-2 border-l-2 border-border pl-4">
+          <div className="flex flex-col gap-2">
+            {children.map((c) => (
+              <TreeNode key={c.id} node={c} byParent={byParent} currentId={currentId} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
