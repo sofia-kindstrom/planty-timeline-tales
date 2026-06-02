@@ -86,6 +86,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "theme-color", content: "#f5f0e8" },
       { title: "Min Växtdagbok" },
       { name: "description", content: "Personlig dagbok för dina krukväxter." },
+      { property: "og:title", content: "Min Växtdagbok" },
+      { name: "twitter:title", content: "Min Växtdagbok" },
+      { property: "og:description", content: "Personlig dagbok för dina krukväxter." },
+      { name: "twitter:description", content: "Personlig dagbok för dina krukväxter." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/cc691f6d-9742-421d-b34f-87466d108ab9" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/cc691f6d-9742-421d-b34f-87466d108ab9" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:type", content: "website" },
     ],
     links: [
       {
