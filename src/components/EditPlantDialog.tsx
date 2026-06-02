@@ -73,6 +73,7 @@ export function EditPlantDialog({ open, onOpenChange, plant, onSaved, onDeleted 
       acquired_at: acquiredAt || null,
       notes: notes.trim() || null,
       image_url: imageUrl,
+      parent_id: parentId,
     }).eq("id", plant.id);
     setSaving(false);
     if (error) { toast.error(error.message); return; }
