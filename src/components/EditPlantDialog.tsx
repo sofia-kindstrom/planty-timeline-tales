@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ImagePicker } from "./ImagePicker";
 import { supabase } from "@/integrations/supabase/client";
-import { Plant } from "@/lib/plants";
+import { listPlants, Plant } from "@/lib/plants";
 import { toast } from "sonner";
 
 type Props = {
