@@ -102,6 +102,9 @@ function PlantPage() {
           )}
         </div>
 
+        {/* Family tree */}
+        <FamilyTree current={plant} all={allPlants} onAddCutting={() => setAddCuttingOpen(true)} />
+
         {/* Timeline */}
         <section className="mt-8">
           <div className="flex items-baseline justify-between px-1">
