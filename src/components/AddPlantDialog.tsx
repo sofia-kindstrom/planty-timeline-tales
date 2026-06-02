@@ -66,6 +66,7 @@ export function AddPlantDialog({ open, onOpenChange, onSaved, defaultParentId = 
       acquired_at: acquiredAt || null,
       notes: notes.trim() || null,
       image_url: imageUrl,
+      parent_id: parentId,
     });
     setSaving(false);
     if (error) { toast.error(error.message); return; }
