@@ -107,54 +107,7 @@ function PlantPage() {
         <FamilyTree current={plant} all={allPlants} onAddCutting={() => setAddCuttingOpen(true)} />
 
         {/* Timeline */}
-        <section className="mt-8">
-          <div className="flex items-baseline justify-between px-1">
-            <h2 className="text-lg font-semibold">Tidslinje</h2>
-            <span className="text-xs text-muted-foreground">{events.length} händelser • dra åt sidan</span>
-          </div>
-
-          {events.length === 0 ? (
-            <div className="mt-4 rounded-2xl border border-dashed border-border bg-secondary/30 p-8 text-center text-sm text-muted-foreground">
-              Inga händelser än. Tryck på + för att logga första gången du vattnar 💧
-            </div>
-          ) : (
-            <div className="relative mt-4">
-              {/* Horizontal scroll track */}
-              <div className="no-scrollbar -mx-4 overflow-x-auto px-4 pb-4">
-                <div className="relative inline-flex min-w-full gap-4">
-                  {/* spine line */}
-                  <div className="pointer-events-none absolute left-0 right-0 top-[88px] h-0.5 bg-border" />
-                  {events.map((e) => (
-                    <button
-                      key={e.id}
-                      onClick={() => { setEditingEvent(e); }}
-                      className="group relative z-10 w-56 shrink-0 text-left"
-                    >
-                      <div className="rounded-2xl bg-card p-3 shadow-sm ring-1 ring-border transition group-active:scale-[0.98]">
-                        {e.image_url ? (
-                          <div className="mb-2 aspect-video w-full overflow-hidden rounded-xl bg-secondary">
-                            <img src={e.image_url} alt="" className="h-full w-full object-cover" />
-                          </div>
-                        ) : (
-                          <div className="mb-2 flex aspect-video w-full items-center justify-center rounded-xl bg-secondary/60">
-                            <Leaf className="h-8 w-8 text-accent" />
-                          </div>
-                        )}
-                        <div className="text-sm font-medium leading-snug">{e.label}</div>
-                        {e.note && <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">{e.note}</div>}
-                      </div>
-                      {/* node + date */}
-                      <div className="mt-3 flex flex-col items-center">
-                        <div className="h-3 w-3 rounded-full border-2 border-background bg-primary shadow" />
-                        <div className="mt-2 text-xs text-muted-foreground">{formatDate(e.event_at)}</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </section>
+        <Timeline events={events} onEdit={setEditingEvent} />
       </main>
 
       <button
