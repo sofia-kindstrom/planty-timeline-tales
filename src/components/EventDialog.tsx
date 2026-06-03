@@ -122,7 +122,7 @@ export function EventDialog({ open, onOpenChange, plantId, event, onSaved }: Pro
               placeholder="Frivilligt — t.ex. ny kruka 17 cm, jorden var torr" />
           </div>
           <ImagePicker value={imageUrl} onChange={setImageUrl} aspect="video" label="Foto (valfritt)" />
-        </div>
+        </form>
         <DialogFooter className="flex-row justify-between gap-2 sm:justify-between">
           {editing ? (
             <AlertDialog>
