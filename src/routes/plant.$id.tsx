@@ -198,8 +198,8 @@ function FamilyTree({
           Ingen släkt än. Lägg till en stickling så börjar trädet växa 🌿
         </div>
       ) : (
-        <div className="no-scrollbar mt-4 -mx-4 overflow-x-auto px-4 pb-2">
-          <div className="inline-block min-w-full">
+        <div className="no-scrollbar mt-4 -mx-4 overflow-x-auto px-4 pb-2 pt-2">
+          <div className="inline-block min-w-full pt-1">
             <TreeNode node={root} byParent={byParent} currentId={current.id} />
           </div>
         </div>
@@ -263,5 +263,101 @@ function Info({ icon, label, value }: { icon: React.ReactNode; label: string; va
         <div className="truncate text-sm">{value}</div>
       </div>
     </div>
+  );
+}
+
+const PAGE_SIZE = 10;
+
+function Timeline({
+  events,
+  onEdit,
+}: {
+  events: PlantEvent[];
+  onEdit: (e: PlantEvent) => void;
+}) {
+  const [showAll, setShowAll] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // events are sorted ascending → senaste sist. Visa de 10 senaste.
+  const visible = useMemo(
+    () => (showAll ? events : events.slice(-PAGE_SIZE)),
+    [events, showAll],
+  );
+  const hiddenCount = events.length - visible.length;
+
+  // Auto-scrolla längst till höger när listan ändras
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, [visible.length]);
+
+  return (
+    <section className="mt-8">
+      <div className="flex items-baseline justify-between px-1">
+        <h2 className="text-lg font-semibold">Tidslinje</h2>
+        <span className="text-xs text-muted-foreground">
+          {events.length} händelser{events.length > 0 ? " • senaste till höger" : ""}
+        </span>
+      </div>
+
+      {events.length === 0 ? (
+        <div className="mt-4 rounded-2xl border border-dashed border-border bg-secondary/30 p-8 text-center text-sm text-muted-foreground">
+          Inga händelser än. Tryck på + för att logga första gången du vattnar 💧
+        </div>
+      ) : (
+        <>
+          {hiddenCount > 0 && (
+            <div className="mt-3 px-1">
+              <button
+                onClick={() => setShowAll(true)}
+                className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground transition active:scale-95"
+              >
+                Visa {hiddenCount} äldre
+              </button>
+            </div>
+          )}
+          <div ref={scrollRef} className="no-scrollbar mt-4 -mx-4 overflow-x-auto px-4 pb-4 pt-2">
+            <div className="inline-flex min-w-full items-stretch gap-4">
+              {visible.map((e) => {
+                const emoji = emojiForLabel(e.label);
+                return (
+                  <button
+                    key={e.id}
+                    onClick={() => onEdit(e)}
+                    className="group flex w-56 shrink-0 flex-col text-left"
+                  >
+                    {/* Datum + prick ovanför kortet → ingen krock med långa anteckningar */}
+                    <div className="mb-2 flex flex-col items-center">
+                      <div className="text-xs text-muted-foreground">{formatDate(e.event_at)}</div>
+                      <div className="mt-1.5 h-3 w-3 rounded-full border-2 border-background bg-primary shadow" />
+                    </div>
+                    <div className="flex-1 rounded-2xl bg-card p-3 shadow-sm ring-1 ring-border transition group-active:scale-[0.98]">
+                      {e.image_url ? (
+                        <div className="mb-2 aspect-video w-full overflow-hidden rounded-xl bg-secondary">
+                          <img src={e.image_url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="mb-2 flex aspect-video w-full items-center justify-center rounded-xl bg-secondary/60">
+                          {emoji ? (
+                            <span className="text-4xl leading-none">{emoji}</span>
+                          ) : (
+                            <Leaf className="h-8 w-8 text-accent" />
+                          )}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1.5 text-sm font-medium leading-snug">
+                        {emoji && e.image_url && <span>{emoji}</span>}
+                        <span>{e.label}</span>
+                      </div>
+                      {e.note && <div className="mt-1 line-clamp-3 text-xs text-muted-foreground">{e.note}</div>}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+    </section>
   );
 }
