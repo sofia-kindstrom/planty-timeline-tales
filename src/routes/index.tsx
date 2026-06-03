@@ -75,7 +75,7 @@ function Gallery() {
               >
                 <div className="aspect-square overflow-hidden bg-secondary/60">
                   {p.image_url ? (
-                    <img src={p.image_url} alt={p.name} className="h-full w-full object-cover transition group-hover:scale-105" />
+                    <img src={p.image_url} alt={p.name} loading="lazy" decoding="async" className="h-full w-full object-cover transition group-hover:scale-105" />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">
                       <Leaf className="h-12 w-12 text-accent" />
