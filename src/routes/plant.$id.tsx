@@ -1,10 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Plus, Pencil, Droplets, Sun, Calendar, Home, Leaf, GitBranch } from "lucide-react";
 import { getPlant, listEvents, listPlants, Plant, PlantEvent } from "@/lib/plants";
 import { EventDialog } from "@/components/EventDialog";
 import { EditPlantDialog } from "@/components/EditPlantDialog";
 import { AddPlantDialog } from "@/components/AddPlantDialog";
+import { emojiForLabel } from "@/lib/event-icons";
 
 export const Route = createFileRoute("/plant/$id")({
   component: PlantPage,
@@ -82,11 +83,11 @@ function PlantPage() {
       </div>
 
       <main className="mx-auto max-w-3xl px-4">
-        <div className="-mt-6 rounded-3xl bg-card p-5 shadow-sm ring-1 ring-border">
+        <div className="mt-4 rounded-3xl bg-card p-5 shadow-sm ring-1 ring-border">
           <h1 className="text-2xl font-semibold tracking-tight">{plant.name}</h1>
-          {plant.species && <p className="mt-0.5 text-sm italic text-muted-foreground">{plant.species}</p>}
+          {plant.species && <p className="mt-1 text-sm italic text-muted-foreground">{plant.species}</p>}
 
-          <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+          <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
             {plant.room && <Info icon={<Home className="h-4 w-4" />} label="Plats" value={plant.room} />}
             {plant.light_needs && <Info icon={<Sun className="h-4 w-4" />} label="Ljus" value={plant.light_needs} />}
             {plant.watering_interval_days != null && (
