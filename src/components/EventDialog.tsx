@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PlantEvent } from "@/lib/plants";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
+import { EVENT_PRESETS } from "@/lib/event-icons";
 
 type Props = {
   open: boolean;
@@ -26,8 +27,6 @@ type Props = {
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
-
-const QUICK_LABELS = ["Vattnad", "Vattnad m. näring", "Beskuren", "Omplanterad", "Roterad", "Annat"];
 
 export function EventDialog({ open, onOpenChange, plantId, event, onSaved }: Props) {
   const editing = !!event;
@@ -81,34 +80,49 @@ export function EventDialog({ open, onOpenChange, plantId, event, onSaved }: Pro
         <DialogHeader>
           <DialogTitle>{editing ? "Redigera händelse" : "Ny händelse"}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <form autoComplete="off" onSubmit={(e) => e.preventDefault()} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="date">Datum</Label>
-            <Input id="date" type="date" value={eventAt} onChange={(e) => setEventAt(e.target.value)} />
+            <Input id="date" type="date" value={eventAt} onChange={(e) => setEventAt(e.target.value)} autoComplete="off" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="label">Vad gjorde du?</Label>
-            <Input id="label" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Vattnad" />
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              {QUICK_LABELS.map((q) => (
-                <button
-                  key={q}
-                  type="button"
-                  onClick={() => setLabel(q)}
-                  className="rounded-full bg-secondary px-3 py-1 text-xs text-secondary-foreground hover:bg-accent"
-                >
-                  {q}
-                </button>
-              ))}
+            <div className="grid grid-cols-3 gap-1.5">
+              {EVENT_PRESETS.map((q) => {
+                const active = label === q.label;
+                return (
+                  <button
+                    key={q.label}
+                    type="button"
+                    onClick={() => setLabel(q.label)}
+                    className={`flex flex-col items-center gap-1 rounded-2xl px-2 py-2.5 text-xs transition active:scale-95 ${
+                      active
+                        ? "bg-primary/15 ring-2 ring-primary text-foreground"
+                        : "bg-secondary text-secondary-foreground hover:bg-accent"
+                    }`}
+                  >
+                    <span className="text-xl leading-none">{q.emoji}</span>
+                    <span className="text-[11px] leading-tight">{q.label}</span>
+                  </button>
+                );
+              })}
             </div>
+            <Input
+              id="label"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              placeholder="Eller skriv egen…"
+              autoComplete="off"
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="note">Anteckning</Label>
             <Textarea id="note" value={note} onChange={(e) => setNote(e.target.value)} rows={3}
+              autoComplete="off"
               placeholder="Frivilligt — t.ex. ny kruka 17 cm, jorden var torr" />
           </div>
           <ImagePicker value={imageUrl} onChange={setImageUrl} aspect="video" label="Foto (valfritt)" />
-        </div>
+        </form>
         <DialogFooter className="flex-row justify-between gap-2 sm:justify-between">
           {editing ? (
             <AlertDialog>
