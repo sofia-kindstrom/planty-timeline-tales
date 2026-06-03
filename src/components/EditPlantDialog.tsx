@@ -96,34 +96,36 @@ export function EditPlantDialog({ open, onOpenChange, plant, onSaved, onDeleted 
         <DialogHeader>
           <DialogTitle>Redigera växt</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <form autoComplete="off" onSubmit={(e) => e.preventDefault()} className="space-y-4">
+          <input type="text" name="prevent_autofill" autoComplete="off" className="hidden" tabIndex={-1} />
+          <input type="password" name="prevent_autofill_pw" autoComplete="new-password" className="hidden" tabIndex={-1} />
           <ImagePicker value={imageUrl} onChange={setImageUrl} />
           <div className="space-y-2">
             <Label htmlFor="name">Namn *</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+            <Input id="name" name="plant-name" autoComplete="off" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="species">Art</Label>
-            <Input id="species" value={species} onChange={(e) => setSpecies(e.target.value)} />
+            <Input id="species" name="plant-species" autoComplete="off" value={species} onChange={(e) => setSpecies(e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="room">Rum / placering</Label>
-            <Input id="room" value={room} onChange={(e) => setRoom(e.target.value)} />
+            <Input id="room" name="plant-room" autoComplete="off" value={room} onChange={(e) => setRoom(e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label htmlFor="water">Vattnas (dagar)</Label>
-              <Input id="water" type="number" inputMode="numeric" value={wateringDays}
+              <Input id="water" type="number" inputMode="numeric" autoComplete="off" value={wateringDays}
                 onChange={(e) => setWateringDays(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="light">Ljus</Label>
-              <Input id="light" value={lightNeeds} onChange={(e) => setLightNeeds(e.target.value)} />
+              <Input id="light" name="plant-light" autoComplete="off" value={lightNeeds} onChange={(e) => setLightNeeds(e.target.value)} />
             </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="acq">Anskaffad</Label>
-            <Input id="acq" type="date" value={acquiredAt} onChange={(e) => setAcquiredAt(e.target.value)} />
+            <Input id="acq" type="date" autoComplete="off" value={acquiredAt} onChange={(e) => setAcquiredAt(e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="parent">Mor-växt</Label>
@@ -141,9 +143,9 @@ export function EditPlantDialog({ open, onOpenChange, plant, onSaved, onDeleted 
           </div>
           <div className="space-y-2">
             <Label htmlFor="notes">Anteckningar</Label>
-            <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
+            <Textarea id="notes" name="plant-notes" autoComplete="off" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
           </div>
-        </div>
+        </form>
         <DialogFooter className="flex-row justify-between gap-2 sm:justify-between">
           <AlertDialog>
             <AlertDialogTrigger asChild>
