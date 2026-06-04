@@ -64,8 +64,10 @@ export type Database = {
           parent_id: string | null
           room: string | null
           species: string | null
+          tags: string[]
           updated_at: string
           user_id: string | null
+          water_snooze_until: string | null
           watering_interval_days: number | null
         }
         Insert: {
@@ -79,8 +81,10 @@ export type Database = {
           parent_id?: string | null
           room?: string | null
           species?: string | null
+          tags?: string[]
           updated_at?: string
           user_id?: string | null
+          water_snooze_until?: string | null
           watering_interval_days?: number | null
         }
         Update: {
@@ -94,8 +98,10 @@ export type Database = {
           parent_id?: string | null
           room?: string | null
           species?: string | null
+          tags?: string[]
           updated_at?: string
           user_id?: string | null
+          water_snooze_until?: string | null
           watering_interval_days?: number | null
         }
         Relationships: [
