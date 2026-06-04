@@ -149,6 +149,10 @@ export function EditPlantDialog({ open, onOpenChange, plant, onSaved, onDeleted 
             </select>
           </div>
           <div className="space-y-2">
+            <Label>Taggar</Label>
+            <TagInput value={tags} onChange={setTags} suggestions={tagSuggestions} placeholder="t.ex. orkidé, kök" />
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="notes">Anteckningar</Label>
             <Textarea id="notes" name="plant-notes" autoComplete="off" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
           </div>
