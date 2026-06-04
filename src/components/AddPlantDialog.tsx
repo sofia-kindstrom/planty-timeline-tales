@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ImagePicker } from "./ImagePicker";
+import { TagInput } from "./TagInput";
 import { supabase } from "@/integrations/supabase/client";
 import { listPlants, Plant } from "@/lib/plants";
 import { toast } from "sonner";
@@ -32,8 +33,13 @@ export function AddPlantDialog({ open, onOpenChange, onSaved, defaultParentId = 
   const [notes, setNotes] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [parentId, setParentId] = useState<string | null>(defaultParentId);
+  const [tags, setTags] = useState<string[]>([]);
   const [plants, setPlants] = useState<Plant[]>([]);
   const [saving, setSaving] = useState(false);
+
+  const tagSuggestions = Array.from(
+    new Set(plants.flatMap((p) => p.tags ?? [])),
+  ).sort();
 
   useEffect(() => {
     if (open) {
@@ -45,7 +51,7 @@ export function AddPlantDialog({ open, onOpenChange, onSaved, defaultParentId = 
   const reset = () => {
     setName(""); setSpecies(""); setRoom(""); setWateringDays("");
     setLightNeeds(""); setAcquiredAt(""); setNotes(""); setImageUrl(null);
-    setParentId(defaultParentId);
+    setParentId(defaultParentId); setTags([]);
   };
 
   const save = async () => {
@@ -67,6 +73,7 @@ export function AddPlantDialog({ open, onOpenChange, onSaved, defaultParentId = 
       notes: notes.trim() || null,
       image_url: imageUrl,
       parent_id: parentId,
+      tags,
     });
     setSaving(false);
     if (error) { toast.error(error.message); return; }
