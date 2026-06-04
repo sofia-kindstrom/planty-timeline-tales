@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ImagePicker } from "./ImagePicker";
+import { TagInput } from "./TagInput";
 import { supabase } from "@/integrations/supabase/client";
 import { listPlants, Plant } from "@/lib/plants";
 import { toast } from "sonner";
@@ -34,8 +35,13 @@ export function EditPlantDialog({ open, onOpenChange, plant, onSaved, onDeleted 
   const [notes, setNotes] = useState(plant.notes ?? "");
   const [imageUrl, setImageUrl] = useState<string | null>(plant.image_url);
   const [parentId, setParentId] = useState<string | null>(plant.parent_id);
+  const [tags, setTags] = useState<string[]>(plant.tags ?? []);
   const [plants, setPlants] = useState<Plant[]>([]);
   const [saving, setSaving] = useState(false);
+
+  const tagSuggestions = Array.from(
+    new Set(plants.flatMap((p) => p.tags ?? []).filter((t) => !tags.includes(t))),
+  ).sort();
 
   useEffect(() => {
     if (open) listPlants().then(setPlants).catch(() => {});
@@ -74,6 +80,7 @@ export function EditPlantDialog({ open, onOpenChange, plant, onSaved, onDeleted 
       notes: notes.trim() || null,
       image_url: imageUrl,
       parent_id: parentId,
+      tags,
     }).eq("id", plant.id);
     setSaving(false);
     if (error) { toast.error(error.message); return; }
