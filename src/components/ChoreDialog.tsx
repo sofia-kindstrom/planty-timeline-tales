@@ -21,7 +21,7 @@ export function ChoreDialog({ chore, onOpenChange, onDone }: Props) {
   const markWatered = async (withNutrients: boolean) => {
     if (!chore) return;
     setBusy(true);
-    const today = new Date().toISOString().slice(0, 10);
+    const today = toLocalDateOnly(new Date());
     const { error } = await supabase.from("plant_events").insert({
       plant_id: chore.plant.id,
       event_at: today,
