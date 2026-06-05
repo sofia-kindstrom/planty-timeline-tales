@@ -41,7 +41,7 @@ export function ChoreDialog({ chore, onOpenChange, onDone }: Props) {
   const snooze = async (days: number) => {
     if (!chore) return;
     setBusy(true);
-    const until = addDaysStr(new Date(), days);
+    const until = addDaysLocalStr(new Date(), days);
     const { error } = await supabase.from("plants").update({ water_snooze_until: until }).eq("id", chore.plant.id);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
