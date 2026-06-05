@@ -40,9 +40,9 @@ function Home() {
   const [search, setSearch] = useState("");
 
   const setTab = (t: Tab) =>
-    navigate({ search: (prev) => ({ ...prev, tab: t }), replace: true });
+    navigate({ search: (prev: IndexSearch) => ({ ...prev, tab: t }), replace: true });
   const setActiveTag = (t: string | null) =>
-    navigate({ search: (prev) => ({ ...prev, tag: t ?? undefined }), replace: true });
+    navigate({ search: (prev: IndexSearch) => ({ ...prev, tag: t ?? undefined }), replace: true });
 
   const load = async () => {
     try {
