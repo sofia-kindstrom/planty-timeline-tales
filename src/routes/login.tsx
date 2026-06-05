@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { useSession } from "@/lib/auth";
 import { toast } from "sonner";
 
@@ -31,26 +30,12 @@ function LoginPage() {
     const fn =
       mode === "signin"
         ? supabase.auth.signInWithPassword({ email, password })
-        : supabase.auth.signUp({
-            email,
-            password,
-            options: { emailRedirectTo: window.location.origin },
-          });
+        : supabase.auth.signUp({ email, password });
     const { error } = await fn;
     setBusy(false);
     if (error) { toast.error(error.message); return; }
-    toast.success(mode === "signin" ? "Inloggad 🌿" : "Konto skapat 🌱");
-  };
-
-  const google = async () => {
-    setBusy(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
-      setBusy(false);
-      toast.error("Kunde inte logga in med Google");
-    }
+    toast.success(mode === "signin" ? "Inloggad 🌿" : "Konto skapat — logga in! 🌱");
+    if (mode === "signup") setMode("signin");
   };
 
   return (
@@ -64,14 +49,6 @@ function LoginPage() {
           <p className="mt-1 text-sm text-muted-foreground">
             {mode === "signin" ? "Logga in för att fortsätta" : "Skapa ett konto"}
           </p>
-        </div>
-
-        <Button type="button" variant="outline" className="w-full" onClick={google} disabled={busy}>
-          Fortsätt med Google
-        </Button>
-
-        <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
-          <div className="h-px flex-1 bg-border" /> eller <div className="h-px flex-1 bg-border" />
         </div>
 
         <form onSubmit={submit} className="space-y-3">
