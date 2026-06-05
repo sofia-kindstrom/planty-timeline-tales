@@ -3,7 +3,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { WaterChore } from "@/lib/chores";
+import { WaterChore, toLocalDateOnly, addDaysLocalStr } from "@/lib/chores";
 import { Droplets, Leaf } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -13,12 +13,6 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   onDone: () => void;
 };
-
-function addDaysStr(base: Date, days: number): string {
-  const d = new Date(base);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
-}
 
 export function ChoreDialog({ chore, onOpenChange, onDone }: Props) {
   const [busy, setBusy] = useState(false);
