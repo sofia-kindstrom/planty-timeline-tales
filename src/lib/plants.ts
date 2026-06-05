@@ -75,11 +75,9 @@ async function compressImage(file: File): Promise<File> {
 }
 
 export async function uploadPlantImage(file: File): Promise<string> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Du måste vara inloggad för att ladda upp bilder.");
   const compressed = await compressImage(file).catch(() => file);
   const ext = (compressed.type === "image/jpeg" ? "jpg" : compressed.name.split(".").pop()) ?? "jpg";
-  const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+  const path = `public/${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage
     .from("plant-images")
     .upload(path, compressed, { cacheControl: "3600", upsert: false, contentType: compressed.type || undefined });

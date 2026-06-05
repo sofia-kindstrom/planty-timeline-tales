@@ -1,12 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Leaf, LogOut, Droplets, ListChecks, Check } from "lucide-react";
+import { Plus, Leaf, Droplets, ListChecks, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddPlantDialog } from "@/components/AddPlantDialog";
 import { ChoreDialog } from "@/components/ChoreDialog";
 import { listPlants, getLatestWateringByPlant, Plant } from "@/lib/plants";
 import { computeWaterChores, WaterChore } from "@/lib/chores";
-import { supabase } from "@/integrations/supabase/client";
 
 type Tab = "chores" | "gallery";
 
@@ -88,13 +87,6 @@ function Home() {
           <div className="flex items-center gap-2">
             <Leaf className="h-6 w-6 text-primary" />
             <h1 className="text-xl font-semibold tracking-tight">Min Växtdagbok</h1>
-            <button
-              onClick={() => supabase.auth.signOut()}
-              aria-label="Logga ut"
-              className="ml-auto flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-1 rounded-full bg-secondary p-1">
             <TabBtn active={tab === "chores"} onClick={() => setTab("chores")}>
@@ -210,7 +202,7 @@ function ChoresView({ chores, onSelect, hasPlants }: { chores: WaterChore[]; onS
                 c.daysOverdue >= 2 ? "bg-destructive/15 text-destructive" : "bg-primary/15 text-primary"
               }`}>
                 <Droplets className="h-3.5 w-3.5" />
-                {c.daysOverdue === 0 ? "Idag" : c.daysOverdue === 1 ? "1 dag sen" : `${c.daysOverdue} d sen`}
+                {c.daysOverdue === 0 ? "Dags idag" : c.daysOverdue === 1 ? "1 dag försenad" : `${c.daysOverdue} dagar försenad`}
               </span>
             </div>
           </button>
