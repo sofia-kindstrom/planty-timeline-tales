@@ -162,7 +162,7 @@ function PlantPage() {
         onOpenChange={setEditOpen}
         plant={plant}
         onSaved={load}
-        onDeleted={() => navigate({ to: "/" })}
+        onDeleted={() => navigate({ to: "/", search: { tab: "gallery" } })}
       />
       <AddPlantDialog
         open={addCuttingOpen}
