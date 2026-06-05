@@ -1,6 +1,6 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Plus, Pencil, Droplets, Sun, Calendar, Home, Leaf, GitBranch } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Droplets, Sun, Calendar, Home, Leaf, GitBranch, Tag } from "lucide-react";
 import { getPlant, listEvents, listPlants, Plant, PlantEvent } from "@/lib/plants";
 import { EventDialog } from "@/components/EventDialog";
 import { EditPlantDialog } from "@/components/EditPlantDialog";
@@ -20,6 +20,7 @@ function formatDate(d: string) {
 function PlantPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
+  const router = useRouter();
   const [plant, setPlant] = useState<Plant | null>(null);
   const [events, setEvents] = useState<PlantEvent[]>([]);
   const [allPlants, setAllPlants] = useState<Plant[]>([]);
@@ -28,6 +29,15 @@ function PlantPage() {
   const [addCuttingOpen, setAddCuttingOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<PlantEvent | null>(null);
+
+  const goBack = () => {
+    // Försök gå bakåt i historiken; annars gå till galleriet.
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.history.back();
+    } else {
+      navigate({ to: "/", search: { tab: "gallery" } });
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -66,7 +76,7 @@ function PlantPage() {
         )}
         <div className="absolute inset-x-0 top-0 flex items-center justify-between p-3">
           <button
-            onClick={() => navigate({ to: "/" })}
+            onClick={goBack}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-background/85 backdrop-blur shadow"
             aria-label="Tillbaka"
           >
@@ -97,6 +107,22 @@ function PlantPage() {
               <Info icon={<Calendar className="h-4 w-4" />} label="Sedan" value={formatDate(plant.acquired_at)} />
             )}
           </div>
+
+          {plant.tags && plant.tags.length > 0 && (
+            <div className="mt-4 flex flex-wrap items-center gap-1.5">
+              <Tag className="h-3.5 w-3.5 text-muted-foreground" />
+              {plant.tags.map((t) => (
+                <Link
+                  key={t}
+                  to="/"
+                  search={{ tab: "gallery", tag: t }}
+                  className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground transition active:scale-95"
+                >
+                  {t}
+                </Link>
+              ))}
+            </div>
+          )}
 
           {plant.notes && (
             <p className="mt-4 whitespace-pre-wrap rounded-2xl bg-secondary/50 p-3 text-sm">{plant.notes}</p>
@@ -136,7 +162,7 @@ function PlantPage() {
         onOpenChange={setEditOpen}
         plant={plant}
         onSaved={load}
-        onDeleted={() => navigate({ to: "/" })}
+        onDeleted={() => navigate({ to: "/", search: { tab: "gallery" } })}
       />
       <AddPlantDialog
         open={addCuttingOpen}

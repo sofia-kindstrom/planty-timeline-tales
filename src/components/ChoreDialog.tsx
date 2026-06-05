@@ -3,7 +3,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { WaterChore } from "@/lib/chores";
+import { WaterChore, toLocalDateOnly, addDaysLocalStr } from "@/lib/chores";
 import { Droplets, Leaf } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -14,12 +14,6 @@ type Props = {
   onDone: () => void;
 };
 
-function addDaysStr(base: Date, days: number): string {
-  const d = new Date(base);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
-}
-
 export function ChoreDialog({ chore, onOpenChange, onDone }: Props) {
   const [busy, setBusy] = useState(false);
   const open = !!chore;
@@ -27,7 +21,7 @@ export function ChoreDialog({ chore, onOpenChange, onDone }: Props) {
   const markWatered = async (withNutrients: boolean) => {
     if (!chore) return;
     setBusy(true);
-    const today = new Date().toISOString().slice(0, 10);
+    const today = toLocalDateOnly(new Date());
     const { error } = await supabase.from("plant_events").insert({
       plant_id: chore.plant.id,
       event_at: today,
@@ -47,7 +41,7 @@ export function ChoreDialog({ chore, onOpenChange, onDone }: Props) {
   const snooze = async (days: number) => {
     if (!chore) return;
     setBusy(true);
-    const until = addDaysStr(new Date(), days);
+    const until = addDaysLocalStr(new Date(), days);
     const { error } = await supabase.from("plants").update({ water_snooze_until: until }).eq("id", chore.plant.id);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
