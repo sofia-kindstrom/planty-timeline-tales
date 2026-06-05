@@ -20,6 +20,7 @@ function formatDate(d: string) {
 function PlantPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
+  const router = useRouter();
   const [plant, setPlant] = useState<Plant | null>(null);
   const [events, setEvents] = useState<PlantEvent[]>([]);
   const [allPlants, setAllPlants] = useState<Plant[]>([]);
@@ -28,6 +29,15 @@ function PlantPage() {
   const [addCuttingOpen, setAddCuttingOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<PlantEvent | null>(null);
+
+  const goBack = () => {
+    // Försök gå bakåt i historiken; annars gå till galleriet.
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.history.back();
+    } else {
+      navigate({ to: "/", search: { tab: "gallery" } });
+    }
+  };
 
   const load = async () => {
     setLoading(true);
