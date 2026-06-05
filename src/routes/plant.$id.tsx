@@ -108,6 +108,22 @@ function PlantPage() {
             )}
           </div>
 
+          {plant.tags && plant.tags.length > 0 && (
+            <div className="mt-4 flex flex-wrap items-center gap-1.5">
+              <Tag className="h-3.5 w-3.5 text-muted-foreground" />
+              {plant.tags.map((t) => (
+                <Link
+                  key={t}
+                  to="/"
+                  search={{ tab: "gallery", tag: t }}
+                  className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground transition active:scale-95"
+                >
+                  {t}
+                </Link>
+              ))}
+            </div>
+          )}
+
           {plant.notes && (
             <p className="mt-4 whitespace-pre-wrap rounded-2xl bg-secondary/50 p-3 text-sm">{plant.notes}</p>
           )}
