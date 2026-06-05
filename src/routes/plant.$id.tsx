@@ -76,7 +76,7 @@ function PlantPage() {
         )}
         <div className="absolute inset-x-0 top-0 flex items-center justify-between p-3">
           <button
-            onClick={() => navigate({ to: "/" })}
+            onClick={goBack}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-background/85 backdrop-blur shadow"
             aria-label="Tillbaka"
           >
