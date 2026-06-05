@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Plus, Leaf, LogOut, Droplets, ListChecks, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,13 @@ import { listPlants, getLatestWateringByPlant, Plant } from "@/lib/plants";
 import { computeWaterChores, WaterChore } from "@/lib/chores";
 import { supabase } from "@/integrations/supabase/client";
 
+type Tab = "chores" | "gallery";
+
+type IndexSearch = {
+  tab: Tab;
+  tag?: string;
+};
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -15,26 +22,35 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Personlig dagbok för dina krukväxter." },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>): IndexSearch => {
+    const t = search.tab === "gallery" ? "gallery" : "chores";
+    const tag = typeof search.tag === "string" && search.tag.length > 0 ? search.tag : undefined;
+    return { tab: t, tag };
+  },
   component: Home,
 });
 
-type Tab = "chores" | "gallery";
-
 function Home() {
+  const { tab, tag: activeTag } = Route.useSearch();
+  const navigate = useNavigate({ from: "/" });
   const [plants, setPlants] = useState<Plant[] | null>(null);
   const [latestWatering, setLatestWatering] = useState<Map<string, string>>(new Map());
-  const [tab, setTab] = useState<Tab>("chores");
   const [open, setOpen] = useState(false);
   const [activeChore, setActiveChore] = useState<WaterChore | null>(null);
-  const [activeTag, setActiveTag] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+
+  const setTab = (t: Tab) =>
+    navigate({ search: (prev) => ({ ...prev, tab: t }), replace: true });
+  const setActiveTag = (t: string | null) =>
+    navigate({ search: (prev) => ({ ...prev, tag: t ?? undefined }), replace: true });
 
   const load = async () => {
     try {
       const list = await listPlants();
-      setPlants(list);
       const latest = await getLatestWateringByPlant(list.map((p) => p.id));
+      // Sätt båda samtidigt för att undvika att alla växter blinkar förbi som plantsysslor
       setLatestWatering(latest);
+      setPlants(list);
     } catch {
       setPlants([]);
     }
@@ -103,19 +119,24 @@ function Home() {
               <div key={i} className="aspect-square animate-pulse rounded-3xl bg-secondary/50" />
             ))}
           </div>
-        ) : tab === "chores" ? (
-          <ChoresView chores={chores} onSelect={setActiveChore} hasPlants={plants.length > 0} />
         ) : (
-          <GalleryView
-            plants={filteredPlants}
-            total={plants.length}
-            tags={allTags}
-            activeTag={activeTag}
-            onTag={setActiveTag}
-            search={search}
-            onSearch={setSearch}
-            onAdd={() => setOpen(true)}
-          />
+          <>
+            <div className={tab === "chores" ? "" : "hidden"}>
+              <ChoresView chores={chores} onSelect={setActiveChore} hasPlants={plants.length > 0} />
+            </div>
+            <div className={tab === "gallery" ? "" : "hidden"}>
+              <GalleryView
+                plants={filteredPlants}
+                total={plants.length}
+                tags={allTags}
+                activeTag={activeTag ?? null}
+                onTag={setActiveTag}
+                search={search}
+                onSearch={setSearch}
+                onAdd={() => setOpen(true)}
+              />
+            </div>
+          </>
         )}
       </main>
 
