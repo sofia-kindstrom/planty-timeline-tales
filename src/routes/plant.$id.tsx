@@ -1,6 +1,6 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Plus, Pencil, Droplets, Sun, Calendar, Home, Leaf, GitBranch } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Droplets, Sun, Calendar, Home, Leaf, GitBranch, Tag } from "lucide-react";
 import { getPlant, listEvents, listPlants, Plant, PlantEvent } from "@/lib/plants";
 import { EventDialog } from "@/components/EventDialog";
 import { EditPlantDialog } from "@/components/EditPlantDialog";
