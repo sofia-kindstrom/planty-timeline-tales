@@ -3,12 +3,16 @@ import { Plant } from "./plants";
 export type WaterChore = {
   plant: Plant;
   lastWatered: string | null;
-  dueDate: string; // YYYY-MM-DD
+  dueDate: string; // YYYY-MM-DD (lokal tid)
   daysOverdue: number; // negativ = inte förfallen
 };
 
-function toDateOnly(d: Date): string {
-  return d.toISOString().slice(0, 10);
+/** YYYY-MM-DD i lokal tid (inte UTC). */
+export function toLocalDateOnly(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 function parseDateOnly(s: string): Date {
@@ -22,12 +26,16 @@ function addDays(d: Date, days: number): Date {
   return out;
 }
 
+export function addDaysLocalStr(base: Date, days: number): string {
+  return toLocalDateOnly(addDays(base, days));
+}
+
 export function computeWaterChores(
   plants: Plant[],
   latestWatering: Map<string, string>,
   today: Date = new Date(),
 ): WaterChore[] {
-  const todayStr = toDateOnly(today);
+  const todayStr = toLocalDateOnly(today);
   const out: WaterChore[] = [];
 
   for (const plant of plants) {
@@ -36,14 +44,15 @@ export function computeWaterChores(
     const last = latestWatering.get(plant.id) ?? plant.acquired_at ?? plant.created_at.slice(0, 10);
     const lastDate = parseDateOnly(last.slice(0, 10));
     const due = addDays(lastDate, plant.watering_interval_days);
-    const dueStr = toDateOnly(due);
+    const dueStr = toLocalDateOnly(due);
 
     // Respektera snooze
     if (plant.water_snooze_until && plant.water_snooze_until > todayStr) continue;
 
     if (dueStr <= todayStr) {
-      const diffMs = today.setHours(0, 0, 0, 0) - due.setHours(0, 0, 0, 0);
-      const daysOverdue = Math.round(diffMs / 86400000);
+      const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+      const dueMidnight = new Date(due.getFullYear(), due.getMonth(), due.getDate()).getTime();
+      const daysOverdue = Math.round((todayMidnight - dueMidnight) / 86400000);
       out.push({
         plant,
         lastWatered: latestWatering.get(plant.id) ?? null,
