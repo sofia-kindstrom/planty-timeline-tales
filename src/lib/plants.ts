@@ -182,3 +182,20 @@ export async function getLatestWateringByPlant(plantIds: string[]): Promise<Map<
   }
   return map;
 }
+
+/** Samma som ovan men utan plant-ID-filter — kan köras parallellt med listAllPlants. */
+export async function getAllLatestWatering(): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  const { data, error } = await supabase
+    .from("plant_events")
+    .select("plant_id,event_at")
+    .in("label", ["Vattnad", "Vattnad m. näring"])
+    .order("event_at", { ascending: false });
+  if (error) throw error;
+  for (const row of data ?? []) {
+    if (!map.has((row as any).plant_id)) {
+      map.set((row as any).plant_id, (row as any).event_at);
+    }
+  }
+  return map;
+}

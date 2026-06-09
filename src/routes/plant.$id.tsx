@@ -26,6 +26,7 @@ function PlantPage() {
   const [events, setEvents] = useState<PlantEvent[]>([]);
   const [allPlants, setAllPlants] = useState<Plant[]>([]);
   const [loading, setLoading] = useState(true);
+  const [detailsLoading, setDetailsLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [addCuttingOpen, setAddCuttingOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -43,14 +44,30 @@ function PlantPage() {
 
   const load = async () => {
     setLoading(true);
+    setDetailsLoading(true);
+    try {
+      const p = await getPlant(id);
+      setPlant(p);
+      setLoading(false); // Visa växtkortet direkt
+      const [e, all] = await Promise.all([listEvents(id), listAllPlants()]);
+      setEvents(e);
+      setAllPlants(all);
+    } catch {
+      setPlant(null);
+      setLoading(false);
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
+  // Tyst refresh efter åtgärder — visar ingen spinner
+  const refresh = async () => {
     try {
       const [p, e, all] = await Promise.all([getPlant(id), listEvents(id), listAllPlants()]);
       setPlant(p); setEvents(e); setAllPlants(all);
-    } catch {
-      setPlant(null);
-    }
-    setLoading(false);
+    } catch {}
   };
+
   useEffect(() => { load(); }, [id]);
 
   if (loading) {
@@ -73,6 +90,7 @@ function PlantPage() {
           <img
             src={plant.image_url}
             alt={plant.name}
+            fetchPriority="high"
             className={`h-full w-full object-cover${plant.status === "deceased" ? " [filter:sepia(0.85)_brightness(0.9)]" : ""}`}
           />
         ) : (
@@ -109,7 +127,7 @@ function PlantPage() {
                 (t) => t !== "minneslund" && t !== "utflyttad",
               );
               await updatePlantStatus(plant.id, "active", null, null, newTags);
-              load();
+              refresh();
             }}
           />
         )}
@@ -151,10 +169,28 @@ function PlantPage() {
         </div>
 
         {/* Family tree */}
-        <FamilyTree current={plant} all={allPlants} onAddCutting={() => setAddCuttingOpen(true)} />
+        {detailsLoading ? (
+          <section className="mt-8">
+            <div className="h-6 w-24 animate-pulse rounded-full bg-secondary/50" />
+            <div className="mt-4 h-12 w-52 animate-pulse rounded-2xl bg-secondary/50" />
+          </section>
+        ) : (
+          <FamilyTree current={plant} all={allPlants} onAddCutting={() => setAddCuttingOpen(true)} />
+        )}
 
         {/* Timeline */}
-        <Timeline events={events} onEdit={setEditingEvent} />
+        {detailsLoading ? (
+          <section className="mt-8">
+            <div className="h-6 w-20 animate-pulse rounded-full bg-secondary/50" />
+            <div className="mt-4 flex gap-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-40 w-52 shrink-0 animate-pulse rounded-2xl bg-secondary/50" />
+              ))}
+            </div>
+          </section>
+        ) : (
+          <Timeline events={events} onEdit={setEditingEvent} />
+        )}
 
         {/* Status actions – only for active plants */}
         {plant.status === "active" && (
@@ -191,26 +227,26 @@ function PlantPage() {
         open={addOpen}
         onOpenChange={setAddOpen}
         plantId={plant.id}
-        onSaved={load}
+        onSaved={refresh}
       />
       <EventDialog
         open={!!editingEvent}
         onOpenChange={(o) => !o && setEditingEvent(null)}
         plantId={plant.id}
         event={editingEvent}
-        onSaved={load}
+        onSaved={refresh}
       />
       <EditPlantDialog
         open={editOpen}
         onOpenChange={setEditOpen}
         plant={plant}
-        onSaved={load}
+        onSaved={refresh}
         onDeleted={() => navigate({ to: "/", search: { tab: "gallery" } })}
       />
       <AddPlantDialog
         open={addCuttingOpen}
         onOpenChange={setAddCuttingOpen}
-        onSaved={load}
+        onSaved={refresh}
         defaultParentId={plant.id}
       />
       {statusDialogTarget && (
@@ -221,7 +257,7 @@ function PlantPage() {
           targetStatus={statusDialogTarget}
           onSaved={() => {
             setStatusDialogTarget(null);
-            load();
+            refresh();
           }}
         />
       )}
@@ -357,7 +393,7 @@ function TreeNode({
       >
         <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-secondary">
           {node.image_url ? (
-            <img src={node.image_url} alt="" className="h-full w-full object-cover" />
+            <img src={node.image_url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
               <Leaf className="h-4 w-4 text-accent" />

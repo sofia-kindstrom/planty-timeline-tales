@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { AddPlantDialog } from "@/components/AddPlantDialog";
 import { ChoreDialog } from "@/components/ChoreDialog";
 import { InbjudanDialog } from "@/components/InbjudanDialog";
-import { listAllPlants, getLatestWateringByPlant, Plant } from "@/lib/plants";
+import { listAllPlants, getAllLatestWatering, Plant } from "@/lib/plants";
 import { computeWaterChores, WaterChore } from "@/lib/chores";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -48,10 +48,8 @@ function Home() {
 
   const load = async () => {
     try {
-      const list = await listAllPlants();
-      const activeIds = list.filter((p) => p.status === "active").map((p) => p.id);
-      // Sätt båda samtidigt för att undvika att alla växter blinkar förbi som plantsysslor
-      const latest = await getLatestWateringByPlant(activeIds);
+      // Körs parallellt — ingen av dessa beror på den andras svar
+      const [list, latest] = await Promise.all([listAllPlants(), getAllLatestWatering()]);
       setLatestWatering(latest);
       setPlants(list);
     } catch {
