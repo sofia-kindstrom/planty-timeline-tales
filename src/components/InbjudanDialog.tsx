@@ -43,8 +43,9 @@ export function InbjudanDialog({ open, onOpenChange }: Props) {
       setLabel("");
       setExpiresAt(defaultExpiry());
       load();
-    } catch {
-      toast.error("Kunde inte skapa inbjudan.");
+    } catch (err: any) {
+      console.error("Skapa inbjudan misslyckades:", err);
+      toast.error(err?.message ?? "Kunde inte skapa inbjudan.");
     } finally {
       setCreating(false);
     }

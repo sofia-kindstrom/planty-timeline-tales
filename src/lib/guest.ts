@@ -67,12 +67,21 @@ export async function createInbjudan(
 ): Promise<GuestTokenRecord> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
+
+  // Generate token client-side — avoids pgcrypto dependency in Supabase
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  const token = Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+
   const { data, error } = await supabase
     .from("guest_tokens")
-    .insert({ label, expires_at: expiresAt, owner_user_id: user.id })
+    .insert({ label, expires_at: expiresAt, owner_user_id: user.id, token })
     .select()
     .single();
-  if (error) throw error;
+  if (error) {
+    console.error("createInbjudan error:", error);
+    throw error;
+  }
   return data as GuestTokenRecord;
 }
 
