@@ -2,7 +2,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Calendar, Droplets, GitBranch, Home, Leaf, Pencil, Plus, Sun, Tag } from "lucide-react";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import {
   getPlant,
   listAllPlants,
@@ -30,14 +30,11 @@ export function PlantProfileSheet({
   onClose: () => void;
 }) {
   return (
-    <Sheet open={!!plantId} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent
-        side="bottom"
-        className="h-[95dvh] rounded-t-[28px] p-0 flex flex-col overflow-hidden [&>button:first-child]:hidden"
-      >
+    <Drawer open={!!plantId} onOpenChange={(open) => !open && onClose()} shouldScaleBackground={false}>
+      <DrawerContent className="h-[95dvh] rounded-t-[28px] p-0 flex flex-col overflow-hidden border-0 outline-none">
         {plantId && <PlantProfileInner plantId={plantId} onClose={onClose} />}
-      </SheetContent>
-    </Sheet>
+      </DrawerContent>
+    </Drawer>
   );
 }
 
