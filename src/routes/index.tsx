@@ -46,10 +46,11 @@ function Home() {
   const setActiveTag = (t: string | null) =>
     navigate({ search: (prev: IndexSearch) => ({ ...prev, tag: t ?? undefined }), replace: true });
 
-  const { data: plants } = useQuery({ queryKey: ["plants"], queryFn: listAllPlants });
+  const { data: plants } = useQuery({ queryKey: ["plants"], queryFn: listAllPlants, staleTime: Infinity });
   const { data: latestWatering = new Map<string, string>() } = useQuery({
     queryKey: ["watering"],
     queryFn: getAllLatestWatering,
+    staleTime: Infinity,
   });
 
   const invalidate = () =>
