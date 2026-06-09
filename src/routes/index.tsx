@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Plus, Leaf, LogOut, Droplets, ListChecks, Check, Mail } from "lucide-react";
@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AddPlantDialog } from "@/components/AddPlantDialog";
 import { ChoreDialog } from "@/components/ChoreDialog";
 import { InbjudanDialog } from "@/components/InbjudanDialog";
+import { PlantProfileSheet } from "@/components/PlantProfileSheet";
 import { listAllPlants, getAllLatestWatering, Plant } from "@/lib/plants";
 import { computeWaterChores, WaterChore } from "@/lib/chores";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,6 +41,7 @@ function Home() {
   const [activeChore, setActiveChore] = useState<WaterChore | null>(null);
   const [inbjudanOpen, setInbjudanOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [selectedPlantId, setSelectedPlantId] = useState<string | null>(null);
 
   const setTab = (t: Tab) =>
     navigate({ search: (prev: IndexSearch) => ({ ...prev, tab: t }), replace: true });
@@ -155,6 +157,7 @@ function Home() {
                 search={search}
                 onSearch={setSearch}
                 onAdd={() => setOpen(true)}
+                onPlantClick={(id) => setSelectedPlantId(id)}
               />
             </div>
           </>
@@ -176,6 +179,7 @@ function Home() {
         onOpenChange={(o) => !o && setActiveChore(null)}
         onDone={invalidate}
       />
+      <PlantProfileSheet plantId={selectedPlantId} onClose={() => setSelectedPlantId(null)} />
     </div>
   );
 }
@@ -243,10 +247,11 @@ function ChoresView({ chores, onSelect, hasPlants }: { chores: WaterChore[]; onS
 }
 
 function GalleryView({
-  plants, total, tags, activeTag, onTag, search, onSearch, onAdd,
+  plants, total, tags, activeTag, onTag, search, onSearch, onAdd, onPlantClick,
 }: {
   plants: Plant[]; total: number; tags: string[]; activeTag: string | null;
-  onTag: (t: string | null) => void; search: string; onSearch: (s: string) => void; onAdd: () => void;
+  onTag: (t: string | null) => void; search: string; onSearch: (s: string) => void;
+  onAdd: () => void; onPlantClick: (id: string) => void;
 }) {
   if (total === 0) {
     return (
@@ -289,11 +294,10 @@ function GalleryView({
       ) : (
         <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
           {plants.map((p) => (
-            <Link
+            <button
               key={p.id}
-              to="/plant/$id"
-              params={{ id: p.id }}
-              className="group block overflow-hidden rounded-3xl bg-card shadow-sm ring-1 ring-border transition active:scale-[0.98]"
+              onClick={() => onPlantClick(p.id)}
+              className="group block overflow-hidden rounded-3xl bg-card shadow-sm ring-1 ring-border transition active:scale-[0.98] text-left"
             >
               <div className="aspect-square overflow-hidden bg-secondary/60">
                 {p.image_url ? (
@@ -323,7 +327,7 @@ function GalleryView({
                   </div>
                 )}
               </div>
-            </Link>
+            </button>
           ))}
         </div>
       )}
