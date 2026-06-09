@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Plus, Pencil, Droplets, Sun, Calendar, Home, Leaf, GitBranch, Tag } from "lucide-react";
-import { getPlant, listEvents, listAllPlants, Plant, PlantEvent, PlantStatus } from "@/lib/plants";
+import { getPlant, listEvents, listAllPlants, updatePlantStatus, Plant, PlantEvent, PlantStatus } from "@/lib/plants";
 import { EventDialog } from "@/components/EventDialog";
 import { EditPlantDialog } from "@/components/EditPlantDialog";
 import { AddPlantDialog } from "@/components/AddPlantDialog";
@@ -105,9 +105,10 @@ function PlantPage() {
             date={plant.status_changed_at}
             note={plant.status_note}
             onReactivate={async () => {
-              await import("@/lib/plants").then(({ updatePlantStatus }) =>
-                updatePlantStatus(plant.id, "active", null, null),
+              const newTags = (plant.tags ?? []).filter(
+                (t) => t !== "minneslund" && t !== "utflyttad",
               );
+              await updatePlantStatus(plant.id, "active", null, null, newTags);
               load();
             }}
           />

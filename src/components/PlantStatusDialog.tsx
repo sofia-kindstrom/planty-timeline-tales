@@ -27,7 +27,12 @@ export function PlantStatusDialog({ open, onOpenChange, plant, targetStatus, onS
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updatePlantStatus(plant.id, targetStatus, date || null, note.trim() || null);
+      const statusTag = targetStatus === "deceased" ? "minneslund" : "utflyttad";
+      const newTags = [
+        ...(plant.tags ?? []).filter((t) => t !== "minneslund" && t !== "utflyttad"),
+        statusTag,
+      ];
+      await updatePlantStatus(plant.id, targetStatus, date || null, note.trim() || null, newTags);
       toast.success(
         isDeceased
           ? `${plant.name} har lagts till i Minneslund.`

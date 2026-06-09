@@ -139,11 +139,11 @@ export async function updatePlantStatus(
   status: PlantStatus,
   statusChangedAt: string | null,
   statusNote: string | null,
+  tags?: string[],
 ): Promise<void> {
-  const { error } = await supabase
-    .from("plants")
-    .update({ status, status_changed_at: statusChangedAt, status_note: statusNote })
-    .eq("id", id);
+  const patch: Record<string, unknown> = { status, status_changed_at: statusChangedAt, status_note: statusNote };
+  if (tags !== undefined) patch.tags = tags;
+  const { error } = await supabase.from("plants").update(patch).eq("id", id);
   if (error) throw error;
 }
 
