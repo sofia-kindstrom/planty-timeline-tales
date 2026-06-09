@@ -79,15 +79,16 @@ function AuthGate({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isLogin = pathname === "/login";
+  const isVatten = pathname === "/vatten";
 
   useEffect(() => {
     if (loading) return;
-    if (!session && !isLogin) navigate({ to: "/login", replace: true });
-  }, [session, loading, isLogin, navigate]);
+    if (!session && !isLogin && !isVatten) navigate({ to: "/login", replace: true });
+  }, [session, loading, isLogin, isVatten, navigate]);
 
-  if (loading) {
+  if (loading && !isVatten) {
     return <div className="flex min-h-screen items-center justify-center text-muted-foreground">…</div>;
   }
-  if (!session && !isLogin) return null;
+  if (!session && !isLogin && !isVatten) return null;
   return <>{children}</>;
 }

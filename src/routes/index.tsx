@@ -1,9 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Leaf, LogOut, Droplets, ListChecks, Check } from "lucide-react";
+import { Plus, Leaf, LogOut, Droplets, ListChecks, Check, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddPlantDialog } from "@/components/AddPlantDialog";
 import { ChoreDialog } from "@/components/ChoreDialog";
+import { InbjudanDialog } from "@/components/InbjudanDialog";
 import { listAllPlants, getLatestWateringByPlant, Plant } from "@/lib/plants";
 import { computeWaterChores, WaterChore } from "@/lib/chores";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +38,7 @@ function Home() {
   const [latestWatering, setLatestWatering] = useState<Map<string, string>>(new Map());
   const [open, setOpen] = useState(false);
   const [activeChore, setActiveChore] = useState<WaterChore | null>(null);
+  const [inbjudanOpen, setInbjudanOpen] = useState(false);
   const [search, setSearch] = useState("");
 
   const setTab = (t: Tab) =>
@@ -99,13 +101,22 @@ function Home() {
           <div className="flex items-center gap-2">
             <Leaf className="h-6 w-6 text-primary" />
             <h1 className="text-xl font-semibold tracking-tight">Min Växtdagbok</h1>
-            <button
-              onClick={() => supabase.auth.signOut()}
-              aria-label="Logga ut"
-              className="ml-auto flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
+            <div className="ml-auto flex items-center gap-1">
+              <button
+                onClick={() => setInbjudanOpen(true)}
+                aria-label="Inbjudningar"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary"
+              >
+                <Mail className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => supabase.auth.signOut()}
+                aria-label="Logga ut"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </div>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-1 rounded-full bg-secondary p-1">
             <TabBtn active={tab === "chores"} onClick={() => setTab("chores")}>
@@ -160,6 +171,7 @@ function Home() {
       </button>
 
       <AddPlantDialog open={open} onOpenChange={setOpen} onSaved={load} />
+      <InbjudanDialog open={inbjudanOpen} onOpenChange={setInbjudanOpen} />
       <ChoreDialog
         chore={activeChore}
         onOpenChange={(o) => !o && setActiveChore(null)}

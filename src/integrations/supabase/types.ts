@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      guest_tokens: {
+        Row: {
+          id: string
+          token: string
+          owner_user_id: string
+          label: string | null
+          expires_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          token?: string
+          owner_user_id: string
+          label?: string | null
+          expires_at: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          token?: string
+          owner_user_id?: string
+          label?: string | null
+          expires_at?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       plant_events: {
         Row: {
           created_at: string
