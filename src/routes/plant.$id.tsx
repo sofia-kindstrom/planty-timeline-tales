@@ -176,13 +176,15 @@ function PlantPage() {
         )}
       </main>
 
-      <button
-        onClick={() => setAddOpen(true)}
-        aria-label="Lägg till händelse"
-        className="fixed bottom-6 right-6 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition active:scale-95"
-      >
-        <Plus className="h-7 w-7" />
-      </button>
+      {plant.status === "active" && (
+        <button
+          onClick={() => setAddOpen(true)}
+          aria-label="Lägg till händelse"
+          className="fixed bottom-6 right-6 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition active:scale-95"
+        >
+          <Plus className="h-7 w-7" />
+        </button>
+      )}
 
       <EventDialog
         open={addOpen}
@@ -305,12 +307,14 @@ function FamilyTree({
         <h2 className="flex items-center gap-2 text-lg font-semibold">
           <GitBranch className="h-4 w-4 text-primary" /> Släktträd
         </h2>
-        <button
-          onClick={onAddCutting}
-          className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground transition active:scale-95"
-        >
-          + Stickling
-        </button>
+        {current.status === "active" && (
+          <button
+            onClick={onAddCutting}
+            className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground transition active:scale-95"
+          >
+            + Stickling
+          </button>
+        )}
       </div>
 
       {!hasFamily ? (

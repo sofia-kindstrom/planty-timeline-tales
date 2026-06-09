@@ -4,7 +4,7 @@ import { Plus, Leaf, LogOut, Droplets, ListChecks, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddPlantDialog } from "@/components/AddPlantDialog";
 import { ChoreDialog } from "@/components/ChoreDialog";
-import { listPlants, getLatestWateringByPlant, Plant } from "@/lib/plants";
+import { listAllPlants, getLatestWateringByPlant, Plant } from "@/lib/plants";
 import { computeWaterChores, WaterChore } from "@/lib/chores";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -46,9 +46,10 @@ function Home() {
 
   const load = async () => {
     try {
-      const list = await listPlants();
-      const latest = await getLatestWateringByPlant(list.map((p) => p.id));
+      const list = await listAllPlants();
+      const activeIds = list.filter((p) => p.status === "active").map((p) => p.id);
       // Sätt båda samtidigt för att undvika att alla växter blinkar förbi som plantsysslor
+      const latest = await getLatestWateringByPlant(activeIds);
       setLatestWatering(latest);
       setPlants(list);
     } catch {
@@ -58,7 +59,7 @@ function Home() {
   useEffect(() => { load(); }, []);
 
   const chores = useMemo(
-    () => (plants ? computeWaterChores(plants, latestWatering) : []),
+    () => (plants ? computeWaterChores(plants.filter((p) => p.status === "active"), latestWatering) : []),
     [plants, latestWatering],
   );
 
@@ -71,13 +72,23 @@ function Home() {
   const filteredPlants = useMemo(() => {
     if (!plants) return [];
     const q = search.trim().toLowerCase();
-    return plants.filter((p) => {
+    const filtered = plants.filter((p) => {
       if (activeTag && !(p.tags ?? []).includes(activeTag)) return false;
       if (q) {
         const hay = `${p.name} ${p.species ?? ""} ${p.room ?? ""} ${(p.tags ?? []).join(" ")}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
+    });
+    // Active plants first (DB order = created_at asc), then inactive sorted by most recently changed
+    return filtered.sort((a, b) => {
+      const aActive = a.status === "active";
+      const bActive = b.status === "active";
+      if (aActive !== bActive) return aActive ? -1 : 1;
+      if (!aActive) {
+        return (b.status_changed_at ?? "").localeCompare(a.status_changed_at ?? "");
+      }
+      return 0;
     });
   }, [plants, activeTag, search]);
 
@@ -108,21 +119,6 @@ function Home() {
             <TabBtn active={tab === "gallery"} onClick={() => setTab("gallery")}>
               <Leaf className="h-4 w-4" /> Galleri
             </TabBtn>
-          </div>
-          <div className="mt-2 flex items-center justify-center gap-4 pb-0.5">
-            <Link
-              to="/minneslund"
-              className="text-xs text-muted-foreground transition hover:text-foreground"
-            >
-              Minneslund
-            </Link>
-            <span className="text-xs text-muted-foreground/40">·</span>
-            <Link
-              to="/utflyttade"
-              className="text-xs text-muted-foreground transition hover:text-foreground"
-            >
-              Utflyttade
-            </Link>
           </div>
         </div>
       </header>
@@ -290,16 +286,31 @@ function GalleryView({
             >
               <div className="aspect-square overflow-hidden bg-secondary/60">
                 {p.image_url ? (
-                  <img src={p.image_url} alt={p.name} loading="lazy" decoding="async" className="h-full w-full object-cover transition group-hover:scale-105" />
+                  <img
+                    src={p.image_url}
+                    alt={p.name}
+                    loading="lazy"
+                    decoding="async"
+                    className={`h-full w-full object-cover transition group-hover:scale-105${p.status === "deceased" ? " [filter:sepia(0.85)_brightness(0.9)]" : ""}`}
+                  />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center">
+                  <div className={`flex h-full w-full items-center justify-center${p.status === "deceased" ? " opacity-50" : ""}`}>
                     <Leaf className="h-12 w-12 text-accent" />
                   </div>
                 )}
               </div>
               <div className="px-3 py-2.5">
                 <div className="truncate text-sm font-medium">{p.name}</div>
-                {p.room && <div className="truncate text-xs text-muted-foreground">{p.room}</div>}
+                {(p.room || p.status !== "active") && (
+                  <div className="flex items-center justify-between gap-1">
+                    <div className="min-w-0 truncate text-xs text-muted-foreground">{p.room}</div>
+                    {p.status !== "active" && (
+                      <span className="shrink-0 text-[10px] italic text-muted-foreground/60">
+                        {p.status === "deceased" ? "Minneslund" : "Utflyttad"}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </Link>
           ))}
