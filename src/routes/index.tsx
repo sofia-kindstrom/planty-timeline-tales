@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { Plus, Leaf, LogOut, Droplets, ListChecks, Check, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddPlantDialog } from "@/components/AddPlantDialog";
@@ -34,8 +35,7 @@ export const Route = createFileRoute("/")({
 function Home() {
   const { tab, tag: activeTag } = Route.useSearch();
   const navigate = useNavigate({ from: "/" });
-  const [plants, setPlants] = useState<Plant[] | null>(null);
-  const [latestWatering, setLatestWatering] = useState<Map<string, string>>(new Map());
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [activeChore, setActiveChore] = useState<WaterChore | null>(null);
   const [inbjudanOpen, setInbjudanOpen] = useState(false);
@@ -46,17 +46,17 @@ function Home() {
   const setActiveTag = (t: string | null) =>
     navigate({ search: (prev: IndexSearch) => ({ ...prev, tag: t ?? undefined }), replace: true });
 
-  const load = async () => {
-    try {
-      // Körs parallellt — ingen av dessa beror på den andras svar
-      const [list, latest] = await Promise.all([listAllPlants(), getAllLatestWatering()]);
-      setLatestWatering(latest);
-      setPlants(list);
-    } catch {
-      setPlants([]);
-    }
-  };
-  useEffect(() => { load(); }, []);
+  const { data: plants } = useQuery({ queryKey: ["plants"], queryFn: listAllPlants });
+  const { data: latestWatering = new Map<string, string>() } = useQuery({
+    queryKey: ["watering"],
+    queryFn: getAllLatestWatering,
+  });
+
+  const invalidate = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["plants"] }),
+      queryClient.invalidateQueries({ queryKey: ["watering"] }),
+    ]);
 
   const chores = useMemo(
     () => (plants ? computeWaterChores(plants.filter((p) => p.status === "active"), latestWatering) : []),
@@ -133,7 +133,7 @@ function Home() {
       </header>
 
       <main className="mx-auto max-w-3xl px-4 pt-6">
-        {plants === null ? (
+        {!plants ? (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="aspect-square animate-pulse rounded-3xl bg-secondary/50" />
@@ -168,12 +168,12 @@ function Home() {
         <Plus className="h-7 w-7" />
       </button>
 
-      <AddPlantDialog open={open} onOpenChange={setOpen} onSaved={load} />
+      <AddPlantDialog open={open} onOpenChange={setOpen} onSaved={invalidate} />
       <InbjudanDialog open={inbjudanOpen} onOpenChange={setInbjudanOpen} />
       <ChoreDialog
         chore={activeChore}
         onOpenChange={(o) => !o && setActiveChore(null)}
-        onDone={load}
+        onDone={invalidate}
       />
     </div>
   );
