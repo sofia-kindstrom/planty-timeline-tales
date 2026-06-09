@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
+export type PlantStatus = 'active' | 'deceased' | 'rehomed';
+
 export type Plant = {
   id: string;
   name: string;
@@ -13,6 +15,9 @@ export type Plant = {
   parent_id: string | null;
   tags: string[];
   water_snooze_until: string | null;
+  status: PlantStatus;
+  status_changed_at: string | null;
+  status_note: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -86,13 +91,60 @@ export async function uploadPlantImage(file: File): Promise<string> {
   return data.publicUrl;
 }
 
+function normalizePlant(p: any): Plant {
+  return { ...p, tags: p.tags ?? [], status: p.status ?? 'active' } as Plant;
+}
+
 export async function listPlants(): Promise<Plant[]> {
+  const { data, error } = await supabase
+    .from("plants")
+    .select("*")
+    .eq("status", "active")
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(normalizePlant);
+}
+
+export async function listAllPlants(): Promise<Plant[]> {
   const { data, error } = await supabase
     .from("plants")
     .select("*")
     .order("created_at", { ascending: true });
   if (error) throw error;
-  return (data ?? []).map((p: any) => ({ ...p, tags: p.tags ?? [] })) as Plant[];
+  return (data ?? []).map(normalizePlant);
+}
+
+export async function listDeceasedPlants(): Promise<Plant[]> {
+  const { data, error } = await supabase
+    .from("plants")
+    .select("*")
+    .eq("status", "deceased")
+    .order("status_changed_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(normalizePlant);
+}
+
+export async function listRehomePlants(): Promise<Plant[]> {
+  const { data, error } = await supabase
+    .from("plants")
+    .select("*")
+    .eq("status", "rehomed")
+    .order("status_changed_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(normalizePlant);
+}
+
+export async function updatePlantStatus(
+  id: string,
+  status: PlantStatus,
+  statusChangedAt: string | null,
+  statusNote: string | null,
+): Promise<void> {
+  const { error } = await supabase
+    .from("plants")
+    .update({ status, status_changed_at: statusChangedAt, status_note: statusNote })
+    .eq("id", id);
+  if (error) throw error;
 }
 
 export async function getPlant(id: string): Promise<Plant> {

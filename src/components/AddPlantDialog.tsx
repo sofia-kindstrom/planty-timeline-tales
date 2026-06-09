@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { ImagePicker } from "./ImagePicker";
 import { TagInput } from "./TagInput";
 import { supabase } from "@/integrations/supabase/client";
-import { listPlants, Plant } from "@/lib/plants";
+import { listAllPlants, Plant } from "@/lib/plants";
 import { toast } from "sonner";
 
 type Props = {
@@ -44,7 +44,7 @@ export function AddPlantDialog({ open, onOpenChange, onSaved, defaultParentId = 
   useEffect(() => {
     if (open) {
       setParentId(defaultParentId);
-      listPlants().then(setPlants).catch(() => {});
+      listAllPlants().then(setPlants).catch(() => {});
     }
   }, [open, defaultParentId]);
 

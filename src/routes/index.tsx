@@ -109,6 +109,21 @@ function Home() {
               <Leaf className="h-4 w-4" /> Galleri
             </TabBtn>
           </div>
+          <div className="mt-2 flex items-center justify-center gap-4 pb-0.5">
+            <Link
+              to="/minneslund"
+              className="text-xs text-muted-foreground transition hover:text-foreground"
+            >
+              Minneslund
+            </Link>
+            <span className="text-xs text-muted-foreground/40">·</span>
+            <Link
+              to="/utflyttade"
+              className="text-xs text-muted-foreground transition hover:text-foreground"
+            >
+              Utflyttade
+            </Link>
+          </div>
         </div>
       </header>
 

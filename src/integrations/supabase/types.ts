@@ -64,6 +64,9 @@ export type Database = {
           parent_id: string | null
           room: string | null
           species: string | null
+          status: string
+          status_changed_at: string | null
+          status_note: string | null
           tags: string[]
           updated_at: string
           user_id: string | null
@@ -81,6 +84,9 @@ export type Database = {
           parent_id?: string | null
           room?: string | null
           species?: string | null
+          status?: string
+          status_changed_at?: string | null
+          status_note?: string | null
           tags?: string[]
           updated_at?: string
           user_id?: string | null
@@ -98,6 +104,9 @@ export type Database = {
           parent_id?: string | null
           room?: string | null
           species?: string | null
+          status?: string
+          status_changed_at?: string | null
+          status_note?: string | null
           tags?: string[]
           updated_at?: string
           user_id?: string | null

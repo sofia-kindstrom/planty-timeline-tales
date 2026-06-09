@@ -1,10 +1,11 @@
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Plus, Pencil, Droplets, Sun, Calendar, Home, Leaf, GitBranch, Tag } from "lucide-react";
-import { getPlant, listEvents, listPlants, Plant, PlantEvent } from "@/lib/plants";
+import { getPlant, listEvents, listAllPlants, Plant, PlantEvent, PlantStatus } from "@/lib/plants";
 import { EventDialog } from "@/components/EventDialog";
 import { EditPlantDialog } from "@/components/EditPlantDialog";
 import { AddPlantDialog } from "@/components/AddPlantDialog";
+import { PlantStatusDialog } from "@/components/PlantStatusDialog";
 import { emojiForLabel } from "@/lib/event-icons";
 
 export const Route = createFileRoute("/plant/$id")({
@@ -29,6 +30,7 @@ function PlantPage() {
   const [addCuttingOpen, setAddCuttingOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<PlantEvent | null>(null);
+  const [statusDialogTarget, setStatusDialogTarget] = useState<Extract<PlantStatus, 'deceased' | 'rehomed'> | null>(null);
 
   const goBack = () => {
     // Försök gå bakåt i historiken; annars gå till galleriet.
@@ -42,7 +44,7 @@ function PlantPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const [p, e, all] = await Promise.all([getPlant(id), listEvents(id), listPlants()]);
+      const [p, e, all] = await Promise.all([getPlant(id), listEvents(id), listAllPlants()]);
       setPlant(p); setEvents(e); setAllPlants(all);
     } catch {
       setPlant(null);
@@ -68,9 +70,13 @@ function PlantPage() {
       {/* Header image */}
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-secondary">
         {plant.image_url ? (
-          <img src={plant.image_url} alt={plant.name} className="h-full w-full object-cover" />
+          <img
+            src={plant.image_url}
+            alt={plant.name}
+            className={`h-full w-full object-cover${plant.status === "deceased" ? " [filter:sepia(0.85)_brightness(0.9)]" : ""}`}
+          />
         ) : (
-          <div className="flex h-full w-full items-center justify-center">
+          <div className={`flex h-full w-full items-center justify-center${plant.status === "deceased" ? " opacity-50" : ""}`}>
             <Leaf className="h-20 w-20 text-accent" />
           </div>
         )}
@@ -93,6 +99,20 @@ function PlantPage() {
       </div>
 
       <main className="mx-auto max-w-3xl px-4">
+        {plant.status !== "active" && (
+          <StatusBanner
+            status={plant.status as "deceased" | "rehomed"}
+            date={plant.status_changed_at}
+            note={plant.status_note}
+            onReactivate={async () => {
+              await import("@/lib/plants").then(({ updatePlantStatus }) =>
+                updatePlantStatus(plant.id, "active", null, null),
+              );
+              load();
+            }}
+          />
+        )}
+
         <div className="mt-4 rounded-3xl bg-card p-5 shadow-sm ring-1 ring-border">
           <h1 className="text-2xl font-semibold tracking-tight">{plant.name}</h1>
           {plant.species && <p className="mt-1 text-sm italic text-muted-foreground">{plant.species}</p>}
@@ -134,6 +154,26 @@ function PlantPage() {
 
         {/* Timeline */}
         <Timeline events={events} onEdit={setEditingEvent} />
+
+        {/* Status actions – only for active plants */}
+        {plant.status === "active" && (
+          <section className="mt-8 mb-2">
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setStatusDialogTarget("deceased")}
+                className="rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-secondary/80 active:scale-95"
+              >
+                Lägg till i Minneslund
+              </button>
+              <button
+                onClick={() => setStatusDialogTarget("rehomed")}
+                className="rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-secondary/80 active:scale-95"
+              >
+                Markera som utflyttad
+              </button>
+            </div>
+          </section>
+        )}
       </main>
 
       <button
@@ -170,6 +210,60 @@ function PlantPage() {
         onSaved={load}
         defaultParentId={plant.id}
       />
+      {statusDialogTarget && (
+        <PlantStatusDialog
+          open={!!statusDialogTarget}
+          onOpenChange={(o) => !o && setStatusDialogTarget(null)}
+          plant={plant}
+          targetStatus={statusDialogTarget}
+          onSaved={() => {
+            setStatusDialogTarget(null);
+            load();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function StatusBanner({
+  status,
+  date,
+  note,
+  onReactivate,
+}: {
+  status: "deceased" | "rehomed";
+  date: string | null;
+  note: string | null;
+  onReactivate: () => void;
+}) {
+  const formattedDate = date
+    ? new Date(date).toLocaleDateString("sv-SE", { day: "numeric", month: "long", year: "numeric" })
+    : null;
+
+  const isDeceased = status === "deceased";
+
+  return (
+    <div className={`mt-4 rounded-2xl px-4 py-3 text-sm ${isDeceased ? "bg-stone-100 text-stone-700 dark:bg-stone-800/40 dark:text-stone-300" : "bg-secondary text-secondary-foreground"}`}>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <span className="font-medium">
+            {isDeceased ? "Vila i frid" : "Utflyttad"}
+          </span>
+          {formattedDate && (
+            <span className="text-muted-foreground"> · {formattedDate}</span>
+          )}
+          {note && (
+            <div className="mt-0.5 text-xs text-muted-foreground">{isDeceased ? note : `till ${note}`}</div>
+          )}
+        </div>
+        <button
+          onClick={onReactivate}
+          className="shrink-0 rounded-full bg-background/60 px-2.5 py-1 text-xs font-medium text-muted-foreground transition hover:bg-background active:scale-95"
+        >
+          Återaktivera
+        </button>
+      </div>
     </div>
   );
 }

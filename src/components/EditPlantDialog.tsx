@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { ImagePicker } from "./ImagePicker";
 import { TagInput } from "./TagInput";
 import { supabase } from "@/integrations/supabase/client";
-import { listPlants, Plant } from "@/lib/plants";
+import { listAllPlants, Plant } from "@/lib/plants";
 import { toast } from "sonner";
 
 type Props = {
@@ -44,7 +44,7 @@ export function EditPlantDialog({ open, onOpenChange, plant, onSaved, onDeleted 
   ).sort();
 
   useEffect(() => {
-    if (open) listPlants().then(setPlants).catch(() => {});
+    if (open) listAllPlants().then(setPlants).catch(() => {});
   }, [open]);
 
   // Exclude self and descendants to avoid cycles
