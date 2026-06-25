@@ -81,10 +81,33 @@ export function ChoreDialog({ chore, onOpenChange, onDone }: Props) {
           </div>
         )}
 
+        {chore && (
+          <div className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium ${
+            chore.shouldGetNutrients
+              ? "bg-amber-100 text-amber-900"
+              : "bg-primary/10 text-primary"
+          }`}>
+            <span>{chore.shouldGetNutrients ? "🧪" : "💧"}</span>
+            <span>{chore.shouldGetNutrients ? "Dags för näring den här gången" : "Vanlig vattning — näring nästa gång"}</span>
+          </div>
+        )}
+
         <div className="space-y-3 pt-2">
           <div className="grid grid-cols-2 gap-2">
-            <Button onClick={() => markWatered(false)} disabled={busy}>💧 Vattnad</Button>
-            <Button onClick={() => markWatered(true)} disabled={busy} variant="secondary">🧪 + näring</Button>
+            <Button
+              onClick={() => markWatered(false)}
+              disabled={busy}
+              variant={chore?.shouldGetNutrients ? "secondary" : "default"}
+            >
+              💧 Vattnad
+            </Button>
+            <Button
+              onClick={() => markWatered(true)}
+              disabled={busy}
+              variant={chore?.shouldGetNutrients ? "default" : "secondary"}
+            >
+              🧪 + näring
+            </Button>
           </div>
           <div>
             <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Skjut upp</div>

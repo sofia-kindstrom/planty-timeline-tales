@@ -7,7 +7,7 @@ import { AddPlantDialog } from "@/components/AddPlantDialog";
 import { ChoreDialog } from "@/components/ChoreDialog";
 import { InbjudanDialog } from "@/components/InbjudanDialog";
 import { PlantProfileSheet } from "@/components/PlantProfileSheet";
-import { listAllPlants, getAllLatestWatering, Plant } from "@/lib/plants";
+import { listAllPlants, getAllLatestWatering, getAllLatestRepotting, Plant } from "@/lib/plants";
 import { computeWaterChores, WaterChore } from "@/lib/chores";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -49,9 +49,17 @@ function Home() {
     navigate({ search: (prev: IndexSearch) => ({ ...prev, tag: t ?? undefined }), replace: true });
 
   const { data: plants } = useQuery({ queryKey: ["plants"], queryFn: listAllPlants, staleTime: Infinity });
-  const { data: latestWatering = new Map<string, string>() } = useQuery({
+  const { data: wateringData } = useQuery({
     queryKey: ["watering"],
     queryFn: getAllLatestWatering,
+    staleTime: Infinity,
+  });
+  const latestWateringDates = wateringData?.dates ?? new Map<string, string>();
+  const latestWateringLabels = wateringData?.labels ?? new Map<string, string>();
+
+  const { data: latestRepotting = new Map<string, string>() } = useQuery({
+    queryKey: ["repotting"],
+    queryFn: getAllLatestRepotting,
     staleTime: Infinity,
   });
 
@@ -59,11 +67,18 @@ function Home() {
     Promise.all([
       queryClient.invalidateQueries({ queryKey: ["plants"] }),
       queryClient.invalidateQueries({ queryKey: ["watering"] }),
+      queryClient.invalidateQueries({ queryKey: ["repotting"] }),
     ]);
 
   const chores = useMemo(
-    () => (plants ? computeWaterChores(plants.filter((p) => p.status === "active"), latestWatering) : []),
-    [plants, latestWatering],
+    () => (plants ? computeWaterChores(
+      plants.filter((p) => p.status === "active"),
+      latestWateringDates,
+      new Date(),
+      latestWateringLabels,
+      latestRepotting,
+    ) : []),
+    [plants, latestWateringDates, latestWateringLabels, latestRepotting],
   );
 
   const allTags = useMemo(() => {

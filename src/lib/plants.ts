@@ -184,18 +184,37 @@ export async function getLatestWateringByPlant(plantIds: string[]): Promise<Map<
 }
 
 /** Samma som ovan men utan plant-ID-filter — kan köras parallellt med listAllPlants. */
-export async function getAllLatestWatering(): Promise<Map<string, string>> {
-  const map = new Map<string, string>();
+export async function getAllLatestWatering(): Promise<{ dates: Map<string, string>; labels: Map<string, string> }> {
+  const dates = new Map<string, string>();
+  const labels = new Map<string, string>();
   const { data, error } = await supabase
     .from("plant_events")
-    .select("plant_id,event_at")
+    .select("plant_id,event_at,label")
     .in("label", ["Vattnad", "Vattnad m. näring"])
     .order("event_at", { ascending: false });
   if (error) throw error;
   for (const row of data ?? []) {
-    if (!map.has((row as any).plant_id)) {
-      map.set((row as any).plant_id, (row as any).event_at);
+    const r = row as any;
+    if (!dates.has(r.plant_id)) {
+      dates.set(r.plant_id, r.event_at);
+      labels.set(r.plant_id, r.label);
     }
+  }
+  return { dates, labels };
+}
+
+/** Senaste omplanterings-datum per växt (för näringsspärr 6 veckor). */
+export async function getAllLatestRepotting(): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  const { data, error } = await supabase
+    .from("plant_events")
+    .select("plant_id,event_at")
+    .eq("label", "Omplanterad")
+    .order("event_at", { ascending: false });
+  if (error) throw error;
+  for (const row of data ?? []) {
+    const r = row as any;
+    if (!map.has(r.plant_id)) map.set(r.plant_id, r.event_at);
   }
   return map;
 }
