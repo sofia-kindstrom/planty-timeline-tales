@@ -10,6 +10,7 @@ import { PlantProfileSheet } from "@/components/PlantProfileSheet";
 import { listAllPlants, getAllLatestWatering, getAllLatestRepotting, Plant } from "@/lib/plants";
 import { computeWaterChores, WaterChore } from "@/lib/chores";
 import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@/lib/auth";
 
 type Tab = "chores" | "gallery";
 
@@ -48,11 +49,13 @@ function Home() {
   const setActiveTag = (t: string | null) =>
     navigate({ search: (prev: IndexSearch) => ({ ...prev, tag: t ?? undefined }), replace: true });
 
-  const { data: plants } = useQuery({ queryKey: ["plants"], queryFn: listAllPlants, staleTime: Infinity });
+  const { session } = useSession();
+  const { data: plants } = useQuery({ queryKey: ["plants"], queryFn: listAllPlants, staleTime: Infinity, enabled: !!session });
   const { data: wateringData } = useQuery({
     queryKey: ["watering"],
     queryFn: getAllLatestWatering,
     staleTime: Infinity,
+    enabled: !!session,
   });
   const latestWateringDates = wateringData?.dates ?? new Map<string, string>();
   const latestWateringLabels = wateringData?.labels ?? new Map<string, string>();
@@ -61,6 +64,7 @@ function Home() {
     queryKey: ["repotting"],
     queryFn: getAllLatestRepotting,
     staleTime: Infinity,
+    enabled: !!session,
   });
 
   const invalidate = () =>
