@@ -54,11 +54,21 @@ export async function updateReminder(
   if (error) throw error;
 }
 
-export async function markReminderDone(id: string): Promise<void> {
+/** Markerar påminnelsen som klar och loggar den på växtens tidslinje. */
+export async function completeReminder(reminder: PlantReminder): Promise<void> {
+  const { error: eventError } = await supabase.from("plant_events").insert({
+    plant_id: reminder.plant_id,
+    event_at: toLocalDateOnly(new Date()),
+    label: reminder.title,
+    note: reminder.body,
+    image_url: null,
+  });
+  if (eventError) throw eventError;
+
   const { error } = await supabase
     .from("plant_reminders")
     .update({ done_at: new Date().toISOString() })
-    .eq("id", id);
+    .eq("id", reminder.id);
   if (error) throw error;
 }
 

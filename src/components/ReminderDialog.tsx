@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { addReminder, deleteReminder, markReminderDone, updateReminder, PlantReminder } from "@/lib/reminders";
+import { addReminder, deleteReminder, completeReminder, updateReminder, PlantReminder } from "@/lib/reminders";
 import { toast } from "sonner";
 import { Check, Trash2 } from "lucide-react";
 
@@ -63,8 +63,8 @@ export function ReminderDialog({ open, onOpenChange, plantId, reminder, onSaved 
     if (!reminder) return;
     setSaving(true);
     try {
-      await markReminderDone(reminder.id);
-      toast.success("Klar ✓");
+      await completeReminder(reminder);
+      toast.success("Klar ✓ — tillagd på tidslinjen");
       onOpenChange(false);
       onSaved();
     } catch (e: any) {

@@ -94,6 +94,7 @@ function Home() {
       queryClient.invalidateQueries({ queryKey: ["watering"] }),
       queryClient.invalidateQueries({ queryKey: ["repotting"] }),
       queryClient.invalidateQueries({ queryKey: ["reminders"] }),
+      queryClient.invalidateQueries({ queryKey: ["events"] }),
     ]);
 
   const chores = useMemo(
