@@ -16,24 +16,9 @@ CREATE INDEX plant_reminders_remind_at_idx ON public.plant_reminders(remind_at);
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.plant_reminders TO authenticated;
 GRANT ALL ON public.plant_reminders TO service_role;
 
--- RLS: scoped via plant ownership, mirroring plant_events
+-- RLS: single-user app — any authenticated user has full access, anon blocked.
+-- Mirrors the live plant_events policy (plants.user_id is unused / null in this project).
 ALTER TABLE public.plant_reminders ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Owner can view their reminders" ON public.plant_reminders
-  FOR SELECT TO authenticated USING (
-    EXISTS (SELECT 1 FROM public.plants p WHERE p.id = plant_id AND p.user_id = auth.uid())
-  );
-CREATE POLICY "Owner can insert their reminders" ON public.plant_reminders
-  FOR INSERT TO authenticated WITH CHECK (
-    EXISTS (SELECT 1 FROM public.plants p WHERE p.id = plant_id AND p.user_id = auth.uid())
-  );
-CREATE POLICY "Owner can update their reminders" ON public.plant_reminders
-  FOR UPDATE TO authenticated USING (
-    EXISTS (SELECT 1 FROM public.plants p WHERE p.id = plant_id AND p.user_id = auth.uid())
-  ) WITH CHECK (
-    EXISTS (SELECT 1 FROM public.plants p WHERE p.id = plant_id AND p.user_id = auth.uid())
-  );
-CREATE POLICY "Owner can delete their reminders" ON public.plant_reminders
-  FOR DELETE TO authenticated USING (
-    EXISTS (SELECT 1 FROM public.plants p WHERE p.id = plant_id AND p.user_id = auth.uid())
-  );
+CREATE POLICY "Auth access to plant_reminders" ON public.plant_reminders
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
