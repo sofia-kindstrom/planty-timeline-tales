@@ -79,6 +79,44 @@ export type Database = {
           },
         ]
       }
+      plant_reminders: {
+        Row: {
+          body: string | null
+          created_at: string
+          done_at: string | null
+          id: string
+          plant_id: string
+          remind_at: string
+          title: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          done_at?: string | null
+          id?: string
+          plant_id: string
+          remind_at?: string
+          title: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          done_at?: string | null
+          id?: string
+          plant_id?: string
+          remind_at?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plant_reminders_plant_id_fkey"
+            columns: ["plant_id"]
+            isOneToOne: false
+            referencedRelation: "plants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plants: {
         Row: {
           acquired_at: string | null

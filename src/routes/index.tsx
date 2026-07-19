@@ -1,18 +1,31 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Plus, Leaf, LogOut, Droplets, ListChecks, Check, Mail } from "lucide-react";
+import { Plus, Leaf, LogOut, Droplets, Bell, ListChecks, Check, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddPlantDialog } from "@/components/AddPlantDialog";
 import { ChoreDialog } from "@/components/ChoreDialog";
+import { ReminderDialog } from "@/components/ReminderDialog";
 import { InbjudanDialog } from "@/components/InbjudanDialog";
 import { PlantProfileSheet } from "@/components/PlantProfileSheet";
 import { listAllPlants, getAllLatestWatering, getAllLatestRepotting, Plant } from "@/lib/plants";
-import { computeWaterChores, WaterChore } from "@/lib/chores";
+import { listDueReminders, PlantReminder } from "@/lib/reminders";
+import { computeWaterChores, WaterChore, toLocalDateOnly } from "@/lib/chores";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/auth";
 
 type Tab = "chores" | "gallery";
+
+type ReminderItem = { reminder: PlantReminder; plant: Plant; daysOverdue: number };
+
+/** Hela dagar mellan två YYYY-MM-DD-datum (b - a), lokal tid. */
+function daysBetween(a: string, b: string): number {
+  const [ay, am, ad] = a.split("-").map(Number);
+  const [by, bm, bd] = b.split("-").map(Number);
+  const am0 = new Date(ay, am - 1, ad).getTime();
+  const bm0 = new Date(by, bm - 1, bd).getTime();
+  return Math.round((bm0 - am0) / 86400000);
+}
 
 type IndexSearch = {
   tab: Tab;
@@ -40,6 +53,7 @@ function Home() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [activeChore, setActiveChore] = useState<WaterChore | null>(null);
+  const [activeReminder, setActiveReminder] = useState<PlantReminder | null>(null);
   const [inbjudanOpen, setInbjudanOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedPlantId, setSelectedPlantId] = useState<string | null>(null);
@@ -67,11 +81,19 @@ function Home() {
     enabled: !!session,
   });
 
+  const { data: dueReminders = [] } = useQuery({
+    queryKey: ["reminders"],
+    queryFn: listDueReminders,
+    staleTime: Infinity,
+    enabled: !!session,
+  });
+
   const invalidate = () =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: ["plants"] }),
       queryClient.invalidateQueries({ queryKey: ["watering"] }),
       queryClient.invalidateQueries({ queryKey: ["repotting"] }),
+      queryClient.invalidateQueries({ queryKey: ["reminders"] }),
     ]);
 
   const chores = useMemo(
@@ -84,6 +106,23 @@ function Home() {
     ) : []),
     [plants, latestWateringDates, latestWateringLabels, latestRepotting],
   );
+
+  const reminderItems = useMemo(() => {
+    if (!plants) return [] as ReminderItem[];
+    const byId = new Map(plants.map((p) => [p.id, p]));
+    const todayStr = toLocalDateOnly(new Date());
+    return dueReminders
+      .map((r) => {
+        const plant = byId.get(r.plant_id);
+        if (!plant || plant.status !== "active") return null;
+        const daysOverdue = daysBetween(r.remind_at, todayStr);
+        return { reminder: r, plant, daysOverdue };
+      })
+      .filter((x): x is ReminderItem => x !== null)
+      .sort((a, b) => b.daysOverdue - a.daysOverdue);
+  }, [plants, dueReminders]);
+
+  const pendingCount = chores.length + reminderItems.length;
 
   const allTags = useMemo(() => {
     const s = new Set<string>();
@@ -141,9 +180,9 @@ function Home() {
           <div className="mt-3 grid grid-cols-2 gap-1 rounded-full bg-secondary p-1">
             <TabBtn active={tab === "chores"} onClick={() => setTab("chores")}>
               <ListChecks className="h-4 w-4" /> Plantsysslor
-              {chores.length > 0 && (
+              {pendingCount > 0 && (
                 <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground">
-                  {chores.length}
+                  {pendingCount}
                 </span>
               )}
             </TabBtn>
@@ -164,7 +203,13 @@ function Home() {
         ) : (
           <>
             <div className={tab === "chores" ? "" : "hidden"}>
-              <ChoresView chores={chores} onSelect={setActiveChore} hasPlants={plants.length > 0} />
+              <ChoresView
+                chores={chores}
+                reminders={reminderItems}
+                onSelect={setActiveChore}
+                onSelectReminder={(r) => setActiveReminder(r)}
+                hasPlants={plants.length > 0}
+              />
             </div>
             <div className={tab === "gallery" ? "" : "hidden"}>
               <GalleryView
@@ -198,6 +243,15 @@ function Home() {
         onOpenChange={(o) => !o && setActiveChore(null)}
         onDone={invalidate}
       />
+      {activeReminder && (
+        <ReminderDialog
+          open={!!activeReminder}
+          onOpenChange={(o) => !o && setActiveReminder(null)}
+          plantId={activeReminder.plant_id}
+          reminder={activeReminder}
+          onSaved={invalidate}
+        />
+      )}
       <PlantProfileSheet plantId={selectedPlantId} onClose={() => setSelectedPlantId(null)} />
     </div>
   );
@@ -216,8 +270,14 @@ function TabBtn({ active, onClick, children }: { active: boolean; onClick: () =>
   );
 }
 
-function ChoresView({ chores, onSelect, hasPlants }: { chores: WaterChore[]; onSelect: (c: WaterChore) => void; hasPlants: boolean }) {
-  if (chores.length === 0) {
+function ChoresView({ chores, reminders, onSelect, onSelectReminder, hasPlants }: {
+  chores: WaterChore[];
+  reminders: ReminderItem[];
+  onSelect: (c: WaterChore) => void;
+  onSelectReminder: (r: PlantReminder) => void;
+  hasPlants: boolean;
+}) {
+  if (chores.length === 0 && reminders.length === 0) {
     return (
       <div className="mt-12 text-center">
         <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-secondary">
@@ -225,7 +285,7 @@ function ChoresView({ chores, onSelect, hasPlants }: { chores: WaterChore[]; onS
         </div>
         <h2 className="mt-4 text-lg font-medium">Allt klart!</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          {hasPlants ? "Inga växter behöver vatten just nu 🌿" : "Lägg till växter för att se sysslor här."}
+          {hasPlants ? "Inga växter behöver omsorg just nu 🌿" : "Lägg till växter för att se sysslor här."}
         </p>
       </div>
     );
@@ -233,6 +293,32 @@ function ChoresView({ chores, onSelect, hasPlants }: { chores: WaterChore[]; onS
 
   return (
     <ul className="space-y-2">
+      {reminders.map((r) => (
+        <li key={r.reminder.id}>
+          <button
+            onClick={() => onSelectReminder(r.reminder)}
+            className="flex w-full items-center gap-3 rounded-2xl bg-card p-3 text-left shadow-sm ring-1 ring-border transition active:scale-[0.99]"
+          >
+            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-secondary">
+              {r.plant.image_url ? (
+                <img src={r.plant.image_url} alt="" loading="lazy" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center"><Leaf className="h-6 w-6 text-accent" /></div>
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate font-medium">{r.reminder.title}</div>
+              <div className="truncate text-xs text-muted-foreground">{r.plant.name}</div>
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="flex items-center gap-1 rounded-full bg-accent/40 px-2.5 py-1 text-xs font-medium text-accent-foreground">
+                <Bell className="h-3.5 w-3.5" />
+                {r.daysOverdue === 0 ? "Idag" : r.daysOverdue === 1 ? "1 dag sen" : `${r.daysOverdue} dagar sen`}
+              </span>
+            </div>
+          </button>
+        </li>
+      ))}
       {chores.map((c) => (
         <li key={c.plant.id}>
           <button

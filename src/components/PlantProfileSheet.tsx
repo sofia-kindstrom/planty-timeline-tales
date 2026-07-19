@@ -1,7 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Calendar, Droplets, GitBranch, Home, Leaf, Pencil, Plus, Sun, Tag } from "lucide-react";
+import { ArrowLeft, Bell, Calendar, Droplets, GitBranch, Home, Leaf, Pencil, Plus, Sun, Tag } from "lucide-react";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import {
   getPlant,
@@ -12,9 +12,11 @@ import {
   PlantEvent,
   PlantStatus,
 } from "@/lib/plants";
+import { listPlantReminders, PlantReminder } from "@/lib/reminders";
 import { AddPlantDialog } from "@/components/AddPlantDialog";
 import { EditPlantDialog } from "@/components/EditPlantDialog";
 import { EventDialog } from "@/components/EventDialog";
+import { ReminderDialog } from "@/components/ReminderDialog";
 import { PlantStatusDialog } from "@/components/PlantStatusDialog";
 import { emojiForLabel } from "@/lib/event-icons";
 
@@ -44,6 +46,8 @@ function PlantProfileInner({ plantId, onClose }: { plantId: string; onClose: () 
   const [addCuttingOpen, setAddCuttingOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<PlantEvent | null>(null);
+  const [reminderAddOpen, setReminderAddOpen] = useState(false);
+  const [editingReminder, setEditingReminder] = useState<PlantReminder | null>(null);
   const [statusDialogTarget, setStatusDialogTarget] = useState<Extract<PlantStatus, "deceased" | "rehomed"> | null>(null);
 
   const { data: plant } = useQuery({
@@ -65,11 +69,20 @@ function PlantProfileInner({ plantId, onClose }: { plantId: string; onClose: () 
     staleTime: Infinity,
   });
 
+  const { data: reminders = [] } = useQuery({
+    queryKey: ["reminders", plantId],
+    queryFn: () => listPlantReminders(plantId),
+    enabled: !!plant,
+    staleTime: Infinity,
+  });
+
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ["plant", plantId] });
     queryClient.invalidateQueries({ queryKey: ["events", plantId] });
     queryClient.invalidateQueries({ queryKey: ["plants"] });
     queryClient.invalidateQueries({ queryKey: ["watering"] });
+    queryClient.invalidateQueries({ queryKey: ["reminders", plantId] });
+    queryClient.invalidateQueries({ queryKey: ["reminders"] });
   };
 
   if (!plant) {
@@ -166,6 +179,12 @@ function PlantProfileInner({ plantId, onClose }: { plantId: string; onClose: () 
           </div>
 
           <FamilyTree current={plant} all={allPlants} onAddCutting={() => setAddCuttingOpen(true)} />
+          <Reminders
+            reminders={reminders}
+            canAdd={plant.status === "active"}
+            onAdd={() => setReminderAddOpen(true)}
+            onEdit={setEditingReminder}
+          />
           <Timeline events={events} onEdit={setEditingEvent} />
 
           {plant.status === "active" && (
@@ -208,6 +227,16 @@ function PlantProfileInner({ plantId, onClose }: { plantId: string; onClose: () 
         event={editingEvent}
         onSaved={refresh}
       />
+      <ReminderDialog open={reminderAddOpen} onOpenChange={setReminderAddOpen} plantId={plant.id} onSaved={refresh} />
+      {editingReminder && (
+        <ReminderDialog
+          open={!!editingReminder}
+          onOpenChange={(o) => !o && setEditingReminder(null)}
+          plantId={plant.id}
+          reminder={editingReminder}
+          onSaved={refresh}
+        />
+      )}
       <EditPlantDialog
         open={editOpen}
         onOpenChange={setEditOpen}
@@ -368,6 +397,55 @@ function TreeNode({
         </div>
       )}
     </div>
+  );
+}
+
+function Reminders({
+  reminders, canAdd, onAdd, onEdit,
+}: {
+  reminders: PlantReminder[]; canAdd: boolean; onAdd: () => void; onEdit: (r: PlantReminder) => void;
+}) {
+  return (
+    <section className="mt-8">
+      <div className="flex items-center justify-between px-1">
+        <h2 className="flex items-center gap-2 text-lg font-semibold">
+          <Bell className="h-4 w-4 text-primary" /> Påminnelser
+        </h2>
+        {canAdd && (
+          <button
+            onClick={onAdd}
+            className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground transition active:scale-95"
+          >
+            + Påminnelse
+          </button>
+        )}
+      </div>
+      {reminders.length === 0 ? (
+        <div className="mt-4 rounded-2xl border border-dashed border-border bg-secondary/30 p-6 text-center text-sm text-muted-foreground">
+          Inga påminnelser. Lägg till en egen syssla med rubrik och datum 🔔
+        </div>
+      ) : (
+        <ul className="mt-4 space-y-2">
+          {reminders.map((r) => (
+            <li key={r.id}>
+              <button
+                onClick={() => onEdit(r)}
+                className="flex w-full items-center gap-3 rounded-2xl bg-card p-3 text-left shadow-sm ring-1 ring-border transition active:scale-[0.99]"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary">
+                  <Bell className="h-5 w-5 text-primary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-medium">{r.title}</div>
+                  {r.body && <div className="truncate text-xs text-muted-foreground">{r.body}</div>}
+                </div>
+                <div className="shrink-0 text-xs text-muted-foreground">{formatDate(r.remind_at)}</div>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 
